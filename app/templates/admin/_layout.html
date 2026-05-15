@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}لوحة التحكم{% endblock %} — {{ site.name }}</title>
+<meta name="robots" content="noindex,nofollow">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Tajawal','sans-serif'],display:['Cairo','serif']},colors:{ink:{900:'#0a0a0a',800:'#0d0d0d',700:'#141414',600:'#1a1a1a'},gold:{300:'#f0d78c',400:'#e6c772',500:'#c9a84c'}}}}}</script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@700;900&display=swap" rel="stylesheet">
+<script defer src="https://unpkg.com/htmx.org@2.0.3"></script>
+<script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</head>
+<body class="bg-ink-900 text-neutral-100 font-sans min-h-screen flex">
+<aside class="w-64 bg-ink-800 border-l border-white/5 p-5 hidden md:block">
+<a href="/admin" class="flex items-center gap-2 mb-8"><span class="size-9 rounded-xl bg-gold-500 grid place-items-center text-ink-900 font-bold">G</span><span class="font-display font-bold">لوحة التحكم</span></a>
+{% set menu = [('dashboard','/admin','الرئيسية','■'),('articles','/admin/articles','المقالات','✎'),('projects','/admin/projects','المشاريع','◆'),('services','/admin/services','الخدمات','★'),('products','/admin/products','المنتجات','▣'),('categories','/admin/categories','التصنيفات','#'),('seo','/admin/seo','SEO','◎'),('analytics','/admin/analytics','الإحصائيات','▲'),('messages','/admin/messages','الرسائل','✉'),('users','/admin/users','المستخدمون','☺'),('settings','/admin/settings','الإعدادات','⚙')] %}
+<nav class="space-y-1 text-sm">{% for k,url,label,ic in menu %}
+<a href="{{ url }}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if active==k %}bg-gold-500/15 text-gold-300{% else %}hover:bg-white/5{% endif %}"><span class="text-gold-400">{{ ic }}</span>{{ label }}</a>
+{% endfor %}</nav>
+<div class="mt-8 pt-6 border-t border-white/5"><a href="/" class="block text-sm text-neutral-400 hover:text-gold-400 mb-2">← الموقع</a><a href="/admin/logout" class="block text-sm text-red-400 hover:text-red-300">خروج</a></div>
+</aside>
+<main class="flex-1 p-6 max-w-full overflow-x-auto">
+<header class="flex items-center justify-between mb-6"><h1 class="font-display text-2xl">{% block heading %}{% endblock %}</h1><span class="text-sm text-neutral-400">{{ user.full_name }}</span></header>
+{% block content %}{% endblock %}
+</main></body></html>

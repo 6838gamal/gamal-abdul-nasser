@@ -1,0 +1,8 @@
+{% extends 'admin/_layout.html' %}{% block heading %}الإعدادات{% endblock %}{% block content %}
+<div class="rounded-2xl bg-ink-700 border border-white/5 p-6 space-y-3 text-sm">
+<p><strong>اسم التطبيق:</strong> {{ settings.APP_NAME }}</p>
+<p><strong>عنوان الموقع:</strong> {{ settings.APP_URL }}</p>
+<p><strong>المؤلف:</strong> {{ settings.SITE_AUTHOR }}</p>
+<p><strong>البيئة:</strong> {{ settings.ENVIRONMENT }}</p>
+<p class="text-neutral-400 mt-4">عدِّل المتغيرات في ملف <code>.env</code> ثم أعد تشغيل الخدمة.</p>
+</div>{% endblock %}

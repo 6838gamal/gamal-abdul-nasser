@@ -1,0 +1,26 @@
+<header class="sticky top-0 z-40 backdrop-blur bg-ink-900/80 border-b border-white/5">
+  <nav class="container mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 group">
+      <span class="size-9 rounded-xl bg-gradient-to-br from-gold-500 to-gold-300 grid place-items-center font-display font-bold text-ink-900">G</span>
+      <span class="font-display font-bold text-lg group-hover:text-gold-400 transition">{{ site.name }}</span>
+    </a>
+    <ul class="hidden md:flex items-center gap-7 text-sm">
+      <li><a href="/" class="hover:text-gold-400">الرئيسية</a></li>
+      <li><a href="/about" class="hover:text-gold-400">من أنا</a></li>
+      <li><a href="/projects" class="hover:text-gold-400">المشاريع</a></li>
+      <li><a href="/services" class="hover:text-gold-400">الخدمات</a></li>
+      <li><a href="/products" class="hover:text-gold-400">المنتجات</a></li>
+      <li><a href="/blog" class="hover:text-gold-400">المدونة</a></li>
+      <li><a href="/contact" class="px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-semibold hover:bg-gold-400">تواصل</a></li>
+    </ul>
+    <button @click="menu=!menu" class="md:hidden p-2 rounded-lg border border-white/10">☰</button>
+  </nav>
+  <div x-show="menu" x-transition class="md:hidden border-t border-white/5">
+    <ul class="px-4 py-3 space-y-2 text-sm">
+      <li><a href="/">الرئيسية</a></li><li><a href="/about">من أنا</a></li>
+      <li><a href="/projects">المشاريع</a></li><li><a href="/services">الخدمات</a></li>
+      <li><a href="/products">المنتجات</a></li><li><a href="/blog">المدونة</a></li>
+      <li><a href="/contact">تواصل</a></li>
+    </ul>
+  </div>
+</header>

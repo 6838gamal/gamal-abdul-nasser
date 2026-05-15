@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-5xl px-4 py-16">
+<h1 class="font-display text-4xl mb-6 text-gold-400">المشاريع</h1>
+<form class="mb-8 flex gap-2"><input name="q" value="{{ q }}" placeholder="ابحث…" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10 focus:border-gold-400 outline-none"><button class="px-5 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">بحث</button></form>
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+{% for p in items %}
+<a href="/projects/{{ p.slug }}" class="rounded-2xl overflow-hidden bg-ink-700 border border-white/5 hover:border-gold-500/40 group">
+{% if p.cover_image %}<img src="{{ p.cover_image }}" alt="{{ p.title }}" loading="lazy" class="aspect-video object-cover w-full">{% endif %}
+<div class="p-5"><h3 class="font-display group-hover:text-gold-400">{{ p.title }}</h3><p class="text-sm text-neutral-400 mt-2">{{ p.short_description }}</p>
+{% if p.tags %}<div class="mt-3 flex flex-wrap gap-1">{% for t in p.tags %}<span class="text-xs px-2 py-1 rounded bg-gold-500/10 text-gold-300">{{ t }}</span>{% endfor %}</div>{% endif %}
+</div></a>
+{% else %}<p class="text-neutral-400">لا توجد مشاريع بعد.</p>{% endfor %}
+</div></section>{% endblock %}

@@ -1,0 +1,28 @@
+<footer class="border-t border-white/5 mt-20">
+  <div class="container mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-3 gap-8 text-sm text-neutral-400">
+    <div>
+      <h4 class="font-display text-gold-400 text-lg mb-3">{{ site.name }}</h4>
+      <p class="leading-7">{{ site.description }}</p>
+    </div>
+    <div>
+      <h4 class="font-display text-white mb-3">روابط</h4>
+      <ul class="space-y-2">
+        <li><a href="/about" class="hover:text-gold-400">من أنا</a></li>
+        <li><a href="/projects" class="hover:text-gold-400">المشاريع</a></li>
+        <li><a href="/services" class="hover:text-gold-400">الخدمات</a></li>
+        <li><a href="/blog" class="hover:text-gold-400">المدونة</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-display text-white mb-3">تابعني</h4>
+      <ul class="space-y-2">
+        <li><a href="/rss.xml" class="hover:text-gold-400">RSS Feed</a></li>
+        <li><a href="/sitemap.xml" class="hover:text-gold-400">Sitemap</a></li>
+        <li><a href="/contact" class="hover:text-gold-400">تواصل</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-white/5 py-5 text-center text-xs text-neutral-500">
+    © {{ site.year }} {{ site.author }} — جميع الحقوق محفوظة
+  </div>
+</footer>

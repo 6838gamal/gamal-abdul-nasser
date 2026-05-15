@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-5xl px-4 py-16">
+<h1 class="font-display text-4xl mb-6 text-gold-400">تواصل معي</h1>
+<div id="contact-box">
+{% if sent %}{% include 'partials/contact_thanks.html' %}{% else %}
+<form hx-post="/contact" hx-target="#contact-box" hx-swap="innerHTML" class="grid gap-4 max-w-2xl">
+<input name="name" required minlength="2" maxlength="150" placeholder="الاسم" class="px-4 py-3 rounded-lg bg-ink-700 border border-white/10">
+<input name="email" type="email" required maxlength="255" placeholder="البريد الإلكتروني" class="px-4 py-3 rounded-lg bg-ink-700 border border-white/10">
+<input name="subject" required minlength="2" maxlength="255" placeholder="الموضوع" class="px-4 py-3 rounded-lg bg-ink-700 border border-white/10">
+<textarea name="body" required minlength="5" maxlength="5000" rows="6" placeholder="رسالتك" class="px-4 py-3 rounded-lg bg-ink-700 border border-white/10"></textarea>
+<button class="px-6 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold w-fit">إرسال</button>
+</form>
+{% endif %}
+</div></section>{% endblock %}

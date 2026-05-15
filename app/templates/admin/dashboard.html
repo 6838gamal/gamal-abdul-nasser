@@ -1,0 +1,13 @@
+{% extends 'admin/_layout.html' %}{% block heading %}الرئيسية{% endblock %}{% block content %}
+<div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+{% for label,val in [('المقالات',counts.articles),('المشاريع',counts.projects),('الخدمات',counts.services),('المنتجات',counts.products)] %}
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">{{ label }}</p><p class="text-3xl font-bold text-gold-400 mt-2">{{ val }}</p></div>
+{% endfor %}</div>
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">زيارات اليوم</p><p class="text-3xl font-bold mt-2">{{ visits_today }}</p></div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">زيارات الأسبوع</p><p class="text-3xl font-bold mt-2">{{ visits_week }}</p></div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">رسائل غير مقروءة</p><p class="text-3xl font-bold text-red-400 mt-2">{{ counts.messages_unread }}</p></div>
+</div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display mb-4">أكثر الصفحات زيارة (7 أيام)</h3>
+<table class="w-full text-sm"><tbody>{% for path,c in top_pages %}<tr class="border-b border-white/5"><td class="py-2">{{ path }}</td><td class="py-2 text-left text-gold-400 font-bold">{{ c }}</td></tr>{% endfor %}</tbody></table>
+</div>{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'admin/_layout.html' %}{% block heading %}{{ a.title if a else 'مقال جديد' }}{% endblock %}{% block content %}
+<form method="post" enctype="multipart/form-data" class="grid lg:grid-cols-3 gap-5"
+      action="{% if a %}/admin/articles/{{ a.id }}/edit{% else %}/admin/articles/new{% endif %}"
+      x-data="{ tab:'content' }">
+<div class="lg:col-span-2 space-y-4">
+<input name="title" required value="{{ a.title if a else '' }}" placeholder="عنوان المقال" class="w-full px-4 py-3 rounded-lg bg-ink-700 border border-white/10 text-lg">
+<textarea name="excerpt" required rows="2" placeholder="مقتطف" class="w-full px-4 py-3 rounded-lg bg-ink-700 border border-white/10">{{ a.excerpt if a else '' }}</textarea>
+<div class="flex gap-2 border-b border-white/5"><button type="button" @click="tab='content'" :class="tab==='content'?'text-gold-400 border-b-2 border-gold-400':''" class="px-4 py-2">المحتوى</button><button type="button" @click="tab='seo'" :class="tab==='seo'?'text-gold-400 border-b-2 border-gold-400':''" class="px-4 py-2">SEO</button></div>
+<div x-show="tab==='content'"><textarea name="content" required rows="22" placeholder="HTML/Markdown" class="w-full px-4 py-3 rounded-lg bg-ink-700 border border-white/10 font-mono text-sm">{{ a.content if a else '' }}</textarea></div>
+<div x-show="tab==='seo'" class="space-y-3" style="display:none">
+<input name="meta_title" placeholder="Meta Title" value="{{ a.meta_title if a else '' }}" class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
+<textarea name="meta_description" rows="2" placeholder="Meta Description" class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10">{{ a.meta_description if a else '' }}</textarea>
+<input name="meta_keywords" placeholder="كلمات مفتاحية" value="{{ a.meta_keywords if a else '' }}" class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
+<input name="canonical_url" placeholder="Canonical URL" value="{{ a.canonical_url if a else '' }}" class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
+<select name="schema_type" class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
+{% for v in ['Article','NewsArticle','BlogPosting','TechArticle'] %}<option {% if a and a.schema_type==v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+<textarea name="faq_json" rows="4" placeholder='[{"q":"...","a":"..."}]' class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10 font-mono text-xs">{{ a.faq_json if a else '' }}</textarea>
+</div>
+</div>
+<aside class="space-y-4">
+<div class="p-4 rounded-2xl bg-ink-700 border border-white/5 space-y-3">
+<label class="flex items-center gap-2"><input type="checkbox" name="is_published" value="true" {% if a and a.is_published %}checked{% endif %}> نشر</label>
+<select name="category_id" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10"><option value="">— تصنيف —</option>{% for c in cats %}<option value="{{ c.id }}" {% if a and a.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+<input name="tags" placeholder="وسوم (مفصولة بفاصلة)" value="{{ a.tags|map(attribute='name')|join(', ') if a else '' }}" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="scheduled_at" type="datetime-local" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="cover" type="file" accept="image/*" class="w-full text-sm">
+{% if a and a.cover_image %}<img src="{{ a.cover_image }}" class="rounded-lg">{% endif %}
+<button class="w-full px-4 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold">حفظ</button>
+</div></aside>
+</form>{% endblock %}

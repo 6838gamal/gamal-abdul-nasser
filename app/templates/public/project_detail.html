@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-5xl px-4 py-16">
+<a href="/projects" class="text-sm text-gold-400 hover:underline">← كل المشاريع</a>
+<h1 class="font-display text-4xl mt-3 mb-4 text-gold-400">{{ p.title }}</h1>
+<p class="text-lg text-neutral-300 mb-6">{{ p.short_description }}</p>
+{% if p.cover_image %}<img src="{{ p.cover_image }}" alt="{{ p.title }}" class="rounded-2xl mb-8">{% endif %}
+<article class="prose prose-invert max-w-none">{{ p.description | safe }}</article>
+{% if p.technologies %}<div class="mt-8"><h3 class="font-display text-gold-400 mb-3">التقنيات</h3><div class="flex flex-wrap gap-2">{% for t in p.technologies %}<span class="px-3 py-1 rounded-lg bg-ink-700 border border-white/10">{{ t }}</span>{% endfor %}</div></div>{% endif %}
+<div class="mt-8 flex gap-3">{% if p.live_url %}<a href="{{ p.live_url }}" rel="nofollow" target="_blank" class="px-5 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">عرض حي</a>{% endif %}{% if p.github_url %}<a href="{{ p.github_url }}" target="_blank" class="px-5 py-2 rounded-lg border border-white/15">GitHub</a>{% endif %}</div>
+</section>{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'admin/_layout.html' %}{% block heading %}التصنيفات{% endblock %}{% block content %}
+<form method="post" action="/admin/categories/add" class="flex gap-2 mb-6">
+<input name="name" required placeholder="اسم التصنيف" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
+<input name="description" placeholder="وصف اختياري" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
+<button class="px-5 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">إضافة</button>
+</form>
+<div class="rounded-2xl bg-ink-700 border border-white/5 p-4">
+<ul class="divide-y divide-white/5">{% for c in items %}<li class="py-3 flex justify-between"><span class="font-bold">{{ c.name }}</span><span class="text-sm text-neutral-400">/{{ c.slug }}</span></li>{% else %}<li class="py-6 text-center text-neutral-500">لا توجد تصنيفات</li>{% endfor %}</ul>
+</div>{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-5xl px-4 py-16">
+<h1 class="font-display text-4xl mb-6 text-gold-400">من أنا</h1>
+<p class="text-lg leading-9 text-neutral-300">{{ site.author }} — {{ site.description }}</p>
+<div class="grid md:grid-cols-3 gap-6 mt-12">
+  <div class="p-6 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display text-gold-400 mb-3">المهارات</h3><ul class="space-y-2 text-sm text-neutral-300"><li>تطوير ويب Full Stack</li><li>تصميم منصات</li><li>SEO تقني متقدم</li></ul></div>
+  <div class="p-6 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display text-gold-400 mb-3">التقنيات</h3><ul class="space-y-2 text-sm text-neutral-300"><li>Python / FastAPI</li><li>PostgreSQL</li><li>Tailwind / HTMX</li></ul></div>
+  <div class="p-6 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display text-gold-400 mb-3">الخبرات</h3><ul class="space-y-2 text-sm text-neutral-300"><li>سنوات في بناء المنصات</li><li>استشارات تقنية</li><li>قيادة فرق تطوير</li></ul></div>
+</div>
+</section>{% endblock %}

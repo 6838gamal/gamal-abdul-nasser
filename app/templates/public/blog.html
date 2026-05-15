@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-5xl px-4 py-16">
+<h1 class="font-display text-4xl mb-6 text-gold-400">المدونة</h1>
+<form class="mb-8 flex gap-2"><input name="q" value="{{ q }}" placeholder="ابحث في المقالات…" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10"><button class="px-5 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">بحث</button></form>
+<div class="grid md:grid-cols-2 gap-5">
+{% for a in items %}
+<a href="/blog/{{ a.slug }}" class="p-6 rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/40 group">
+{% if a.cover_image %}<img src="{{ a.cover_image }}" loading="lazy" class="aspect-video object-cover rounded-xl mb-4">{% endif %}
+<h3 class="font-display text-lg group-hover:text-gold-400">{{ a.title }}</h3>
+<p class="text-sm text-neutral-400 mt-2">{{ a.excerpt }}</p>
+<p class="text-xs text-neutral-500 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د</p>
+</a>{% else %}<p class="text-neutral-400">لا توجد مقالات بعد.</p>{% endfor %}
+</div></section>{% endblock %}

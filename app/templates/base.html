@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+{% set m = meta or {} %}
+<title>{{ m.title or site.name }}</title>
+<meta name="description" content="{{ m.description or site.description }}">
+<meta name="author" content="{{ site.author }}">
+<meta name="robots" content="{{ m.robots or 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
+{% if m.canonical %}<link rel="canonical" href="{{ m.canonical }}">{% endif %}
+{% if m.og %}
+<meta property="og:type" content="{{ m.og.type }}">
+<meta property="og:title" content="{{ m.og.title }}">
+<meta property="og:description" content="{{ m.og.description }}">
+<meta property="og:url" content="{{ m.og.url }}">
+<meta property="og:image" content="{{ m.og.image }}">
+<meta property="og:site_name" content="{{ m.og.site_name }}">
+<meta property="og:locale" content="{{ m.og.locale }}">
+{% endif %}
+{% if m.twitter %}
+<meta name="twitter:card" content="{{ m.twitter.card }}">
+<meta name="twitter:title" content="{{ m.twitter.title }}">
+<meta name="twitter:description" content="{{ m.twitter.description }}">
+<meta name="twitter:image" content="{{ m.twitter.image }}">
+{% endif %}
+<link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Cairo:wght@600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    fontFamily: { sans:['Tajawal','system-ui','sans-serif'], display:['Cairo','serif'] },
+    colors: { ink:{900:'#0a0a0a',800:'#0d0d0d',700:'#141414',600:'#1a1a1a',500:'#222'},
+              gold:{300:'#f0d78c',400:'#e6c772',500:'#c9a84c',600:'#a68a3c'} },
+    boxShadow: { glow:'0 0 40px rgba(201,168,76,0.25)' },
+  }}
+}
+</script>
+<link rel="stylesheet" href="/static/css/app.css">
+<script defer src="https://unpkg.com/htmx.org@2.0.3"></script>
+<script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+{% for ld in (jsonld or []) %}
+<script type="application/ld+json">{{ ld | tojson }}</script>
+{% endfor %}
+{% block head_extra %}{% endblock %}
+</head>
+<body class="bg-ink-900 text-neutral-100 font-sans antialiased min-h-screen flex flex-col"
+      x-data="{ menu:false, dark: localStorage.getItem('mode')!=='light' }"
+      x-init="if(!dark) document.documentElement.classList.remove('dark'); else document.documentElement.classList.add('dark')">
+{% include 'partials/nav.html' %}
+<main class="flex-1">
+{% block content %}{% endblock %}
+</main>
+{% include 'partials/footer.html' %}
+</body>
+</html>

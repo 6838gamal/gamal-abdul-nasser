@@ -1,0 +1,11 @@
+{% extends 'admin/_layout.html' %}{% block heading %}الإحصائيات{% endblock %}{% block content %}
+<div class="grid md:grid-cols-2 gap-5">
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display mb-3">الزيارات اليومية (30 يوم)</h3>
+<table class="w-full text-sm"><tbody>{% for d,c in by_day %}<tr class="border-b border-white/5"><td class="py-1">{{ d | fmtdate }}</td><td class="text-left text-gold-400">{{ c }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display mb-3">الأجهزة</h3>
+<ul>{% for d,c in by_device %}<li class="flex justify-between border-b border-white/5 py-2"><span>{{ d or 'غير معروف' }}</span><span class="text-gold-400">{{ c }}</span></li>{% endfor %}</ul></div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display mb-3">المصادر</h3>
+<ul>{% for r,c in referrers %}<li class="flex justify-between text-sm border-b border-white/5 py-2"><span class="truncate max-w-xs">{{ r }}</span><span class="text-gold-400">{{ c }}</span></li>{% endfor %}</ul></div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display mb-3">أعلى الصفحات</h3>
+<ul>{% for p,c in top %}<li class="flex justify-between text-sm border-b border-white/5 py-2"><span class="truncate max-w-xs">{{ p }}</span><span class="text-gold-400">{{ c }}</span></li>{% endfor %}</ul></div>
+</div>{% endblock %}

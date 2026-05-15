@@ -1,0 +1,24 @@
+{% extends 'admin/_layout.html' %}{% block heading %}SEO والأرشفة{% endblock %}{% block content %}
+<div class="grid md:grid-cols-2 gap-5">
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+<h3 class="font-display mb-4">إعادة الفهرسة</h3>
+<form method="post" action="/admin/seo/reindex"><button class="px-5 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold">Ping محركات البحث الآن</button></form>
+<ul class="mt-4 text-sm space-y-1 text-neutral-400">
+<li>• <a class="text-gold-400" href="/sitemap.xml">/sitemap.xml</a></li>
+<li>• <a class="text-gold-400" href="/news-sitemap.xml">/news-sitemap.xml</a></li>
+<li>• <a class="text-gold-400" href="/rss.xml">/rss.xml</a></li>
+<li>• <a class="text-gold-400" href="/robots.txt">/robots.txt</a></li>
+<li>• <a class="text-gold-400" href="/llms.txt">/llms.txt</a></li>
+</ul>
+</div>
+<div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+<h3 class="font-display mb-4">إعادة التوجيه (Redirects)</h3>
+<form method="post" action="/admin/seo/redirects/add" class="grid grid-cols-3 gap-2 mb-4">
+<input name="source" required placeholder="/old" class="px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="target" required placeholder="/new" class="px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<select name="status_code" class="px-3 py-2 rounded-lg bg-ink-800 border border-white/10"><option>301</option><option>302</option></select>
+<button class="col-span-3 px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">إضافة</button>
+</form>
+<ul class="text-sm space-y-1">{% for r in redirects %}<li>{{ r.source }} → {{ r.target }} ({{ r.status_code }})</li>{% endfor %}</ul>
+</div>
+</div>{% endblock %}

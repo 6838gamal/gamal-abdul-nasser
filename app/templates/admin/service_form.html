@@ -1,0 +1,19 @@
+{% extends 'admin/_layout.html' %}{% block heading %}{{ s.title if s else 'خدمة جديدة' }}{% endblock %}{% block content %}
+<form method="post" action="/admin/services/save" enctype="multipart/form-data" class="grid lg:grid-cols-3 gap-5">
+<input type="hidden" name="sid" value="{{ s.id if s else 0 }}">
+<div class="lg:col-span-2 space-y-4">
+<input name="title" required value="{{ s.title if s else '' }}" placeholder="عنوان الخدمة" class="w-full px-4 py-3 rounded-lg bg-ink-700 border border-white/10 text-lg">
+<textarea name="short_description" required rows="2" placeholder="وصف مختصر" class="w-full px-4 py-3 rounded-lg bg-ink-700 border border-white/10">{{ s.short_description if s else '' }}</textarea>
+<textarea name="description" required rows="12" placeholder="وصف تفصيلي" class="w-full px-4 py-3 rounded-lg bg-ink-700 border border-white/10">{{ s.description if s else '' }}</textarea>
+<textarea name="features" rows="6" placeholder="ميزة في كل سطر">{{ s.features|join('\n') if s else '' }}</textarea>
+<textarea name="pricing_json" rows="6" placeholder='[{"name":"باقة","price":"99","features":["..."]}]' class="w-full px-4 py-2 rounded-lg bg-ink-700 border border-white/10 font-mono text-xs">{{ s.pricing|tojson if s else '[]' }}</textarea>
+</div>
+<aside class="space-y-3 p-4 rounded-2xl bg-ink-700 border border-white/5 h-fit">
+<label class="flex items-center gap-2"><input type="checkbox" name="is_published" value="true" {% if not s or s.is_published %}checked{% endif %}> نشر</label>
+<input name="icon" placeholder="رمز/أيقونة" value="{{ s.icon if s else '' }}" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="cta_text" placeholder="نص الزر" value="{{ s.cta_text if s else 'اطلب الآن' }}" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="cta_url" placeholder="رابط الزر" value="{{ s.cta_url if s else '/contact' }}" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="sort_order" type="number" value="{{ s.sort_order if s else 0 }}" class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
+<input name="cover" type="file" accept="image/*" class="w-full text-sm">
+<button class="w-full px-4 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold">حفظ</button>
+</aside></form>{% endblock %}

@@ -1,0 +1,6 @@
+/* تخصيصات إضافية فوق Tailwind CDN */
+.prose-invert :where(a):not(:where([class~="not-prose"] *)){color:#e6c772}
+.prose-invert :where(h1,h2,h3,h4):not(:where([class~="not-prose"] *)){color:#f0d78c;font-family:Cairo,serif}
+.prose-invert :where(blockquote):not(:where([class~="not-prose"] *)){border-inline-start-color:#c9a84c}
+::selection{background:#c9a84c;color:#0a0a0a}
+html{scrollbar-color:#c9a84c #0a0a0a}
