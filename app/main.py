@@ -31,9 +31,26 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # إنشاء الجداول وحساب المدير الأول إن لم يوجد
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # ── التحقق من وجود DATABASE_URL قبل المحاولة ──────────────────
+    db_url = settings.DATABASE_URL
+    if "localhost" in db_url or "127.0.0.1" in db_url:
+        log.warning(
+            "⚠️  DATABASE_URL تشير إلى localhost — "
+            "تأكد من ضبط متغير البيئة DATABASE_URL على خادم الإنتاج."
+        )
+
+    # ── إنشاء الجداول وحساب المدير الأول ─────────────────────────
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as exc:
+        log.critical(
+            "❌ فشل الاتصال بقاعدة البيانات عند الإقلاع: %s\n"
+            "   تأكد من ضبط DATABASE_URL بشكل صحيح في متغيرات البيئة.",
+            exc,
+        )
+        raise SystemExit(1) from exc
+
     async with AsyncSessionLocal() as db:
         existing = (await db.execute(select(User).where(User.email == settings.ADMIN_EMAIL))).scalar_one_or_none()
         if not existing:
