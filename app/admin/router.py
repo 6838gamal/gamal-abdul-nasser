@@ -357,7 +357,7 @@ async def product_save(pid: int = Form(0), title: str = Form(...),
     if cover and cover.filename:
         p.cover_image = await save_upload(cover, "products", images_only=True)
     if product_file and product_file.filename:
-        p.file_path = await save_upload(product_file, "product_files")
+        p.file_path = await save_upload(product_file, "product_files", private=True)
     if not pid:
         db.add(p)
     await db.commit()

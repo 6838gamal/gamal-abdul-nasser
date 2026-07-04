@@ -15,32 +15,38 @@ from app.core.config import settings
 
 router = APIRouter(prefix="/products")
 
+# ─── مساعدات Supabase ────────────────────────────────────────────────────────
+
+_SUPABASE_SCHEME = "supabase://"
+
+
+def _is_supabase_key(path: str) -> bool:
+    """هل المسار مخزَّن كمفتاح Supabase Bucket (supabase://…)?"""
+    return path.startswith(_SUPABASE_SCHEME)
+
 
 def _is_remote_url(path: str) -> bool:
+    """هل هو رابط عام مباشر (http/https)؟"""
     return path.startswith("http://") or path.startswith("https://")
 
 
-def _make_signed_url(path_in_bucket: str, expires_in: int = 3600) -> str:
-    """إنشاء رابط موقَّت من Supabase Storage."""
+def _make_signed_url(bucket_path: str, expires_in: int = 3600) -> str:
+    """إنشاء رابط موقَّت من Supabase Storage لمسار الـ Bucket."""
     from app.services.uploads import _supabase
-    sb = _supabase()
-    result = sb.storage.from_(settings.SUPABASE_BUCKET).create_signed_url(
-        path_in_bucket, expires_in
-    )
-    return result["signedURL"]
+    try:
+        sb = _supabase()
+        result = sb.storage.from_(settings.SUPABASE_BUCKET).create_signed_url(
+            bucket_path, expires_in
+        )
+        signed = result.get("signedURL") or result.get("signedUrl") or ""
+        if not signed:
+            raise ValueError(f"استجابة غير متوقعة من Supabase: {result}")
+        return signed
+    except Exception as exc:
+        raise RuntimeError(f"فشل إنشاء رابط تحميل موقَّت: {exc}") from exc
 
 
-def _extract_bucket_path(public_url: str) -> str:
-    """استخراج مسار الملف داخل الـ bucket من الرابط العام."""
-    # مثال: https://xxx.supabase.co/storage/v1/object/public/uploads/articles/abc.jpg
-    # نريد: articles/abc.jpg
-    marker = f"/object/public/{settings.SUPABASE_BUCKET}/"
-    idx = public_url.find(marker)
-    if idx != -1:
-        return public_url[idx + len(marker):]
-    # fallback: آخر جزء من المسار
-    return public_url.split("/storage/v1/object/public/", 1)[-1]
-
+# ─── المسارات ────────────────────────────────────────────────────────────────
 
 @router.post("/{slug}/order")
 async def create_order(
@@ -95,17 +101,30 @@ async def download(token: str, db: AsyncSession = Depends(get_db)):
     if not p or not p.file_path:
         raise HTTPException(404)
 
-    p.download_count = (p.download_count or 0) + 1
-    await db.commit()
+    file_path: str = p.file_path
 
-    # ─── ملف على Supabase Storage ────────────────────────────────────
-    if _is_remote_url(p.file_path):
-        bucket_path = _extract_bucket_path(p.file_path)
-        signed_url: str = await asyncio.to_thread(_make_signed_url, bucket_path)
+    # ─── ملف على Supabase (مفتاح bucket محمي) ───────────────────────
+    if _is_supabase_key(file_path):
+        bucket_path = file_path[len(_SUPABASE_SCHEME):]
+        try:
+            signed_url: str = await asyncio.to_thread(_make_signed_url, bucket_path)
+        except RuntimeError as exc:
+            raise HTTPException(502, str(exc)) from exc
+        # نحدّث العداد فقط بعد نجاح إنشاء الرابط الموقَّت
+        p.download_count = (p.download_count or 0) + 1
+        await db.commit()
         return RedirectResponse(signed_url, status_code=302)
 
-    # ─── ملف محلي (احتياطي) ─────────────────────────────────────────
-    file = Path(p.file_path.lstrip("/"))
-    if not file.exists():
-        raise HTTPException(404)
-    return FileResponse(file, filename=file.name)
+    # ─── رابط عام مباشر (صور رُفعت قبل التعديل) ────────────────────
+    if _is_remote_url(file_path):
+        p.download_count = (p.download_count or 0) + 1
+        await db.commit()
+        return RedirectResponse(file_path, status_code=302)
+
+    # ─── ملف محلي (احتياطي للبيانات القديمة) ───────────────────────
+    local_file = Path(file_path.lstrip("/"))
+    if not local_file.exists():
+        raise HTTPException(404, "الملف غير موجود")
+    p.download_count = (p.download_count or 0) + 1
+    await db.commit()
+    return FileResponse(local_file, filename=local_file.name)

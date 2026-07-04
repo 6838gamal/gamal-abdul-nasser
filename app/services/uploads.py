@@ -48,16 +48,39 @@ def _optimize_image(data: bytes, content_type: str) -> bytes:
 
 
 def _upload_to_supabase(data: bytes, path_in_bucket: str, content_type: str) -> str:
-    """رفع الملف إلى Supabase Storage وإعادة الرابط العام."""
-    sb = _supabase()
-    bucket = settings.SUPABASE_BUCKET
+    """رفع الملف إلى Supabase Storage.
+    للصور:  يعيد الرابط العام مباشرةً.
+    للملفات: يعيد مسار الـ bucket (بادئة 'supabase://') للتعامل معها لاحقاً بروابط موقَّتة.
+    """
+    try:
+        sb = _supabase()
+        bucket = settings.SUPABASE_BUCKET
+        sb.storage.from_(bucket).upload(
+            path=path_in_bucket,
+            file=data,
+            file_options={"content-type": content_type, "upsert": "false"},
+        )
+        return sb.storage.from_(bucket).get_public_url(path_in_bucket)
+    except Exception as exc:
+        raise HTTPException(502, f"فشل رفع الملف إلى Supabase Storage: {exc}") from exc
 
-    sb.storage.from_(bucket).upload(
-        path=path_in_bucket,
-        file=data,
-        file_options={"content-type": content_type, "upsert": "false"},
-    )
-    return sb.storage.from_(bucket).get_public_url(path_in_bucket)
+
+def _upload_file_to_supabase(data: bytes, path_in_bucket: str, content_type: str) -> str:
+    """رفع ملف غير صورة إلى Supabase وإعادة مفتاح الـ bucket (supabase://<path>).
+    الملفات لا تُخزَّن كروابط عامة بل كمسارات خاصة لتوليد روابط موقَّتة عند التحميل.
+    """
+    try:
+        sb = _supabase()
+        bucket = settings.SUPABASE_BUCKET
+        sb.storage.from_(bucket).upload(
+            path=path_in_bucket,
+            file=data,
+            file_options={"content-type": content_type, "upsert": "false"},
+        )
+        # نعيد مسار Bucket بادئاً بـ "supabase://" للتمييز عن المسارات المحلية القديمة
+        return f"supabase://{path_in_bucket}"
+    except Exception as exc:
+        raise HTTPException(502, f"فشل رفع الملف إلى Supabase Storage: {exc}") from exc
 
 
 async def save_upload(
@@ -65,8 +88,14 @@ async def save_upload(
     subdir: str = "general",
     *,
     images_only: bool = False,
+    private: bool = False,
 ) -> str:
-    """التحقق من الملف ورفعه إلى Supabase Storage، وإعادة الرابط العام."""
+    """التحقق من الملف ورفعه إلى Supabase Storage.
+
+    - private=False (الافتراضي): الصور ترفع وتُعاد كرابط عام مباشر (https://…)
+    - private=True: يُرفع الملف ويُعاد كمفتاح Bucket (supabase://…) بغض النظر عن نوعه،
+      وعند التحميل يُولَّد له رابط موقَّت منتهي الصلاحية.
+    """
     ct = file.content_type or mimetypes.guess_type(file.filename or "")[0] or ""
     allowed = ALLOWED_IMAGE if images_only else ALLOWED_FILE
 
@@ -81,12 +110,17 @@ async def save_upload(
     name = f"{secrets.token_hex(12)}{ext}"
     path_in_bucket = f"{subdir}/{name}"
 
-    # تحسين الصور في الذاكرة قبل الرفع
-    if ct in ALLOWED_IMAGE and ct != "image/svg+xml":
-        data = _optimize_image(data, ct)
-
-    # الرفع في thread منفصل لتجنب حجب event loop
-    public_url: str = await asyncio.to_thread(
-        _upload_to_supabase, data, path_in_bucket, ct
-    )
-    return public_url
+    if private:
+        # ملفات خاصة (مثل ملفات المنتجات): تُخزَّن كمفتاح Bucket دائماً
+        bucket_key: str = await asyncio.to_thread(
+            _upload_file_to_supabase, data, path_in_bucket, ct
+        )
+        return bucket_key
+    else:
+        # ملفات عامة (صور الغلاف): تُحسَّن وتُرفع كرابط عام
+        if ct in ALLOWED_IMAGE and ct != "image/svg+xml":
+            data = _optimize_image(data, ct)
+        public_url: str = await asyncio.to_thread(
+            _upload_to_supabase, data, path_in_bucket, ct
+        )
+        return public_url
