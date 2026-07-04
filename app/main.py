@@ -70,9 +70,9 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY,
 app.add_middleware(RedirectMiddleware)
 app.add_middleware(AnalyticsMiddleware)
 
-# Static + uploads
+# Static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+# ملاحظة: /uploads لم يعد ضرورياً — الملفات تُرفع إلى Supabase Storage مباشرةً
 
 # Routers
 app.include_router(public.router)
