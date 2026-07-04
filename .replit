@@ -28,6 +28,10 @@ UPLOAD_DIR = "uploads"
 MAX_UPLOAD_MB = "50"
 SECRET_KEY = "dev-secret-replit-change-me-in-production-32chars"
 REDIS_URL = "redis://localhost:6379/0"
+SUPABASE_BUCKET = "uploads"
+SUPABASE_JWKS_URL = "https://bmaqlynnbhbnrsbuboim.supabase.co/auth/v1/.well-known/jwks.json"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_2oxXLQ5MKkWhgG1XlBOXdQ_Swub8v85"
+SUPABASE_URL = "https://bmaqlynnbhbnrsbuboim.supabase.co"
 
 [workflows]
 runButton = "Project"

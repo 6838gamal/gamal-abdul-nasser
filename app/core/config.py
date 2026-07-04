@@ -89,6 +89,12 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_MB: int = 50
 
+    # ─── Supabase Storage ─────────────────────────────────────────
+    SUPABASE_URL: str = ""
+    SUPABASE_SECRET_KEY: str = ""   # service role key
+    SUPABASE_PUBLISHABLE_KEY: str = ""
+    SUPABASE_BUCKET: str = "uploads"
+
     # حجم connection pool لكل worker
     DB_POOL_SIZE: int = 3
     DB_POOL_MAX_OVERFLOW: int = 7
