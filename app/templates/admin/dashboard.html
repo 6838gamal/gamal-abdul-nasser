@@ -1,13 +1,86 @@
-{% extends 'admin/_layout.html' %}{% block heading %}الرئيسية{% endblock %}{% block content %}
-<div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-{% for label,val in [('المقالات',counts.articles),('المشاريع',counts.projects),('الخدمات',counts.services),('المنتجات',counts.products)] %}
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">{{ label }}</p><p class="text-3xl font-bold text-gold-400 mt-2">{{ val }}</p></div>
-{% endfor %}</div>
-<div class="grid md:grid-cols-3 gap-4 mb-6">
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">زيارات اليوم</p><p class="text-3xl font-bold mt-2">{{ visits_today }}</p></div>
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">زيارات الأسبوع</p><p class="text-3xl font-bold mt-2">{{ visits_week }}</p></div>
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><p class="text-sm text-neutral-400">رسائل غير مقروءة</p><p class="text-3xl font-bold text-red-400 mt-2">{{ counts.messages_unread }}</p></div>
+{% extends 'admin/_layout.html' %}
+{% block heading %}لوحة التحكم{% endblock %}
+{% block content %}
+
+{# ── بطاقات الإحصائيات السريعة ── #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+  {% set stats = [
+    ('المقالات',   counts.articles,         '/admin/articles',   '#e6c772', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'),
+    ('المشاريع',   counts.projects,         '/admin/projects',   '#e6c772', 'M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z'),
+    ('الخدمات',    counts.services,         '/admin/services',   '#e6c772', 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'),
+    ('المنتجات',   counts.products,         '/admin/products',   '#e6c772', 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'),
+  ] %}
+  {% for label, val, url, color, path in stats %}
+  <a href="{{ url }}" class="group p-4 rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/20 transition-all hover:bg-ink-600">
+    <div class="flex items-start justify-between mb-3">
+      <div class="p-2 rounded-xl bg-gold-500/10 group-hover:bg-gold-500/20 transition-colors">
+        <svg class="size-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ path }}"/>
+        </svg>
+      </div>
+      <svg class="size-3 text-neutral-600 group-hover:text-gold-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </div>
+    <p class="text-2xl md:text-3xl font-black text-gold-400">{{ val }}</p>
+    <p class="text-xs text-neutral-500 mt-1">{{ label }}</p>
+  </a>
+  {% endfor %}
 </div>
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display mb-4">أكثر الصفحات زيارة (7 أيام)</h3>
-<table class="w-full text-sm"><tbody>{% for path,c in top_pages %}<tr class="border-b border-white/5"><td class="py-2">{{ path }}</td><td class="py-2 text-left text-gold-400 font-bold">{{ c }}</td></tr>{% endfor %}</tbody></table>
-</div>{% endblock %}
+
+{# ── صف: الزيارات + الرسائل ── #}
+<div class="grid md:grid-cols-3 gap-3 mb-6">
+  <div class="p-4 rounded-2xl bg-ink-700 border border-white/5">
+    <p class="text-xs text-neutral-500 mb-1">زيارات اليوم</p>
+    <p class="text-3xl font-black">{{ visits_today }}</p>
+  </div>
+  <div class="p-4 rounded-2xl bg-ink-700 border border-white/5">
+    <p class="text-xs text-neutral-500 mb-1">زيارات الأسبوع</p>
+    <p class="text-3xl font-black">{{ visits_week }}</p>
+  </div>
+  <a href="/admin/messages" class="group p-4 rounded-2xl border transition-all
+    {% if counts.messages_unread > 0 %}bg-red-500/5 border-red-500/20 hover:border-red-500/40{% else %}bg-ink-700 border-white/5{% endif %}">
+    <p class="text-xs text-neutral-500 mb-1">رسائل غير مقروءة</p>
+    <p class="text-3xl font-black {{ 'text-red-400' if counts.messages_unread > 0 else '' }}">
+      {{ counts.messages_unread }}
+    </p>
+    {% if counts.messages_unread > 0 %}
+    <p class="text-xs text-red-400 mt-1 group-hover:underline">عرض الرسائل ←</p>
+    {% endif %}
+  </a>
+</div>
+
+{# ── روابط سريعة للإنشاء ── #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  {% set quick = [
+    ('+ مقال جديد',     '/admin/articles/new'),
+    ('+ مشروع جديد',   '/admin/projects/new'),
+    ('+ خدمة جديدة',   '/admin/services/new'),
+    ('+ منتج جديد',    '/admin/products/new'),
+  ] %}
+  {% for label, url in quick %}
+  <a href="{{ url }}" class="flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-dashed border-white/10 text-sm text-neutral-400 hover:text-gold-400 hover:border-gold-500/40 transition-all hover:bg-gold-500/5">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+{# ── أكثر الصفحات زيارة ── #}
+<div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+  <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+    <h3 class="font-display font-bold text-sm">أكثر الصفحات زيارة <span class="text-neutral-500 font-normal">(آخر 7 أيام)</span></h3>
+    <a href="/admin/analytics" class="text-xs text-gold-400 hover:underline">كل الإحصائيات</a>
+  </div>
+  <div class="divide-y divide-white/5">
+    {% for path, c in top_pages %}
+    <div class="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
+      <span class="text-sm text-neutral-300 font-mono truncate">{{ path }}</span>
+      <span class="text-sm font-bold text-gold-400 shrink-0 mr-4">{{ c }}</span>
+    </div>
+    {% else %}
+    <p class="px-5 py-8 text-center text-neutral-600 text-sm">لا توجد بيانات بعد</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

@@ -620,6 +620,61 @@ async def settings_profile_save(
     })
 
 
+@router.get("/categories/{cid}/edit")
+async def cat_edit_form(cid: int, request: Request, db: AsyncSession = Depends(get_db),
+                         user: User = Depends(require_admin)):
+    c = await db.get(Category, cid)
+    if not c:
+        raise HTTPException(404)
+    return templates.TemplateResponse("admin/category_form.html", {
+        "request": request, "c": c, "user": user, "active": "categories",
+    })
+
+
+@router.post("/categories/{cid}/edit")
+async def cat_edit_save(cid: int, name: str = Form(...), description: str = Form(""),
+                         db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    c = await db.get(Category, cid)
+    if not c:
+        raise HTTPException(404)
+    c.name = name.strip()
+    c.slug = slugify(name)
+    c.description = description.strip() or None
+    await db.commit()
+    return RedirectResponse("/admin/categories", status_code=303)
+
+
+@router.post("/categories/{cid}/delete")
+async def cat_delete(cid: int, db: AsyncSession = Depends(get_db),
+                      user: User = Depends(require_admin)):
+    c = await db.get(Category, cid)
+    if c:
+        await db.delete(c)
+        await db.commit()
+    return RedirectResponse("/admin/categories", status_code=303)
+
+
+@router.post("/messages/{mid}/delete")
+async def msg_delete(mid: int, db: AsyncSession = Depends(get_db),
+                      user: User = Depends(require_admin)):
+    m = await db.get(Message, mid)
+    if m:
+        await db.delete(m)
+        await db.commit()
+    return RedirectResponse("/admin/messages", status_code=303)
+
+
+@router.post("/orders/{oid}/status")
+async def order_status_update(oid: int, order_status: str = Form(...),
+                               db: AsyncSession = Depends(get_db),
+                               user: User = Depends(require_admin)):
+    o = await db.get(Order, oid)
+    if o:
+        o.status = order_status
+        await db.commit()
+    return RedirectResponse("/admin/orders", status_code=303)
+
+
 @router.post("/settings/password")
 async def settings_password_save(
         request: Request,

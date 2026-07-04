@@ -34,9 +34,13 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
 
 
 @router.get("/admin/logout")
+@router.post("/admin/logout")
 async def logout():
     resp = RedirectResponse("/admin/login", status_code=303)
     resp.delete_cookie("access_token", path="/")
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
     return resp
 
 

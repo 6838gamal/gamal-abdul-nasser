@@ -1,16 +1,64 @@
-{% extends 'admin/_layout.html' %}{% block heading %}messages{% endblock %}{% block content %}
-<div class="mb-4 flex justify-between"><div></div>
-{% if active in ['articles','projects','services','products'] %}<a href="/admin/{{ active }}/new" class="px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">+ جديد</a>{% endif %}
-</div>
+{% extends 'admin/_layout.html' %}
+{% block heading %}الرسائل{% endblock %}
+{% block content %}
 <div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
-<table class="w-full text-sm"><thead class="bg-ink-600"><tr><th class="p-3 text-right">العنصر</th><th class="p-3">حالة</th><th class="p-3">التاريخ</th><th class="p-3">إجراءات</th></tr></thead>
-<tbody>{% for it in items %}<tr class="border-t border-white/5">
-<td class="p-3">{{ it.title or it.name or it.subject or it.email or it.full_name }}</td>
-<td class="p-3 text-center">{% if it.is_published is defined %}{% if it.is_published %}<span class="text-emerald-400">منشور</span>{% else %}<span class="text-neutral-500">مسودة</span>{% endif %}{% elif it.is_read is defined %}{% if it.is_read %}مقروء{% else %}<span class="text-red-400">جديد</span>{% endif %}{% else %}-{% endif %}</td>
-<td class="p-3 text-center text-neutral-400">{{ it.created_at | fmtdate }}</td>
-<td class="p-3 text-center">
-{% if active in ['articles','projects','services','products'] %}<a href="/admin/{{ active }}/{{ it.id }}/edit" class="text-gold-400 hover:underline">تعديل</a>
-<form method="post" action="/admin/{{ active }}/{{ it.id }}/delete" class="inline" onsubmit="return confirm('حذف؟')"><button class="text-red-400 ms-3">حذف</button></form>{% endif %}
-{% if active=='messages' %}<form method="post" action="/admin/messages/{{ it.id }}/toggle" class="inline"><button class="text-gold-400">تبديل</button></form>{% endif %}
-</td></tr>{% else %}<tr><td colspan="4" class="p-8 text-center text-neutral-500">لا توجد سجلات</td></tr>{% endfor %}</tbody></table>
-</div>{% endblock %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm" style="min-width:560px">
+      <thead>
+        <tr class="bg-ink-600 text-neutral-500 text-xs uppercase tracking-wider">
+          <th class="px-4 py-3 text-right font-semibold">المرسل</th>
+          <th class="px-4 py-3 text-right font-semibold">الموضوع</th>
+          <th class="px-4 py-3 text-center font-semibold">الحالة</th>
+          <th class="px-4 py-3 text-center font-semibold hidden sm:table-cell">التاريخ</th>
+          <th class="px-4 py-3 text-center font-semibold">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/[0.04]">
+        {% for it in items %}
+        <tr class="hover:bg-white/[0.02] transition-colors {{ '' if it.is_read else 'bg-gold-500/[0.02]' }}">
+          <td class="px-4 py-3">
+            <div class="font-medium text-white text-sm {{ '' if it.is_read else 'font-semibold' }}">{{ it.name }}</div>
+            <div class="text-xs text-neutral-500">{{ it.email }}</div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="text-sm {{ '' if it.is_read else 'text-white font-medium' }}">{{ it.subject }}</div>
+            <div class="text-xs text-neutral-500 mt-0.5 line-clamp-1">{{ it.body[:80] }}</div>
+          </td>
+          <td class="px-4 py-3 text-center">
+            {% if it.is_read %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-neutral-700 text-neutral-500 text-xs">مقروء</span>
+            {% else %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-400 text-xs font-semibold">جديد</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center text-neutral-500 text-xs hidden sm:table-cell">{{ it.created_at | fmtdate }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-2">
+              <form method="post" action="/admin/messages/{{ it.id }}/toggle">
+                <button class="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 transition-colors"
+                        title="{{ 'تعيين كغير مقروء' if it.is_read else 'تعيين كمقروء' }}">
+                  {{ '◎' if it.is_read else '●' }}
+                </button>
+              </form>
+              <form method="post" action="/admin/messages/{{ it.id }}/delete"
+                    onsubmit="return confirm('حذف هذه الرسالة نهائياً؟')">
+                <button class="text-red-400 hover:text-red-300 text-xs font-medium">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="px-4 py-14 text-center text-neutral-500">لا توجد رسائل بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if items %}
+  <div class="px-4 py-3 border-t border-white/[0.04] text-xs text-neutral-600">
+    {{ items | length }} رسالة —
+    {% set unread = items | selectattr('is_read', 'equalto', false) | list | length %}
+    <span class="{{ 'text-gold-400' if unread > 0 else '' }}">{{ unread }} غير مقروءة</span>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

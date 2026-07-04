@@ -1,9 +1,94 @@
-{% extends 'admin/_layout.html' %}{% block heading %}التصنيفات{% endblock %}{% block content %}
-<form method="post" action="/admin/categories/add" class="flex gap-2 mb-6">
-<input name="name" required placeholder="اسم التصنيف" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
-<input name="description" placeholder="وصف اختياري" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10">
-<button class="px-5 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">إضافة</button>
-</form>
-<div class="rounded-2xl bg-ink-700 border border-white/5 p-4">
-<ul class="divide-y divide-white/5">{% for c in items %}<li class="py-3 flex justify-between"><span class="font-bold">{{ c.name }}</span><span class="text-sm text-neutral-400">/{{ c.slug }}</span></li>{% else %}<li class="py-6 text-center text-neutral-500">لا توجد تصنيفات</li>{% endfor %}</ul>
-</div>{% endblock %}
+{% extends 'admin/_layout.html' %}
+{% block heading %}التصنيفات{% endblock %}
+{% block content %}
+<div class="grid lg:grid-cols-3 gap-5">
+
+  {# ── نموذج إضافة تصنيف جديد ── #}
+  <div class="lg:col-span-1">
+    <div class="rounded-2xl bg-ink-700 border border-white/5 p-5 sticky top-6">
+      <h3 class="font-display font-bold mb-4 text-gold-400">تصنيف جديد</h3>
+      <form method="post" action="/admin/categories/add" class="space-y-3">
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">اسم التصنيف *</label>
+          <input name="name" required placeholder="مثال: تطوير الويب"
+                 class="w-full bg-ink-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-gold-500 transition-colors">
+        </div>
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">وصف مختصر</label>
+          <textarea name="description" rows="3" placeholder="وصف اختياري للتصنيف..."
+                    class="w-full bg-ink-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-gold-500 transition-colors resize-none"></textarea>
+        </div>
+        <button type="submit"
+                class="w-full px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold text-sm transition-colors">
+          إضافة التصنيف
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# ── قائمة التصنيفات ── #}
+  <div class="lg:col-span-2">
+    <div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+      <div class="px-5 py-4 border-b border-white/5">
+        <h3 class="font-display font-bold text-sm">التصنيفات الحالية
+          <span class="text-neutral-500 font-normal">({{ items | length }})</span>
+        </h3>
+      </div>
+      <div class="divide-y divide-white/[0.04]">
+        {% for it in items %}
+        <div class="px-5 py-4 flex items-start justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+             x-data="{editing:false}">
+
+          {# عرض التفاصيل #}
+          <div x-show="!editing" class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-medium text-white text-sm">{{ it.name }}</span>
+              <span class="text-[10px] font-mono text-neutral-500 bg-white/5 px-1.5 py-0.5 rounded">/{{ it.slug }}</span>
+            </div>
+            {% if it.description %}
+            <p class="text-xs text-neutral-500 mt-1">{{ it.description }}</p>
+            {% endif %}
+          </div>
+
+          {# نموذج التعديل السريع #}
+          <form x-show="editing" x-cloak method="post" action="/admin/categories/{{ it.id }}/edit"
+                class="flex-1 space-y-2">
+            <input name="name" value="{{ it.name }}" required
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+            <input name="description" value="{{ it.description or '' }}" placeholder="وصف (اختياري)"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+            <div class="flex gap-2">
+              <button type="submit"
+                      class="px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold text-xs transition-colors">
+                حفظ
+              </button>
+              <button type="button" @click="editing=false"
+                      class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs transition-colors">
+                إلغاء
+              </button>
+            </div>
+          </form>
+
+          {# أزرار الإجراءات #}
+          <div x-show="!editing" class="flex items-center gap-2 shrink-0">
+            <button @click="editing=true"
+                    class="text-gold-400 hover:text-gold-300 text-xs font-medium">تعديل</button>
+            <form method="post" action="/admin/categories/{{ it.id }}/delete"
+                  onsubmit="return confirm('حذف تصنيف «{{ it.name }}»؟ سيُزال من المقالات المرتبطة به.')">
+              <button class="text-red-400 hover:text-red-300 text-xs font-medium">حذف</button>
+            </form>
+          </div>
+
+        </div>
+        {% else %}
+        <div class="px-5 py-14 text-center text-neutral-500 text-sm">
+          لا توجد تصنيفات بعد — أضف أول تصنيف من النموذج على اليمين
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+<style>[x-cloak]{display:none!important}</style>
+{% endblock %}

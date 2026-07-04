@@ -1,16 +1,65 @@
-{% extends 'admin/_layout.html' %}{% block heading %}services{% endblock %}{% block content %}
-<div class="mb-4 flex justify-between"><div></div>
-{% if active in ['articles','projects','services','products'] %}<a href="/admin/{{ active }}/new" class="px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">+ جديد</a>{% endif %}
-</div>
+{% extends 'admin/_layout.html' %}
+{% block heading %}الخدمات{% endblock %}
+{% block header_actions %}
+<a href="/admin/services/new"
+   class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold text-sm transition-colors">
+  <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+  خدمة جديدة
+</a>
+{% endblock %}
+{% block content %}
 <div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
-<table class="w-full text-sm"><thead class="bg-ink-600"><tr><th class="p-3 text-right">العنصر</th><th class="p-3">حالة</th><th class="p-3">التاريخ</th><th class="p-3">إجراءات</th></tr></thead>
-<tbody>{% for it in items %}<tr class="border-t border-white/5">
-<td class="p-3">{{ it.title or it.name or it.subject or it.email or it.full_name }}</td>
-<td class="p-3 text-center">{% if it.is_published is defined %}{% if it.is_published %}<span class="text-emerald-400">منشور</span>{% else %}<span class="text-neutral-500">مسودة</span>{% endif %}{% elif it.is_read is defined %}{% if it.is_read %}مقروء{% else %}<span class="text-red-400">جديد</span>{% endif %}{% else %}-{% endif %}</td>
-<td class="p-3 text-center text-neutral-400">{{ it.created_at | fmtdate }}</td>
-<td class="p-3 text-center">
-{% if active in ['articles','projects','services','products'] %}<a href="/admin/{{ active }}/{{ it.id }}/edit" class="text-gold-400 hover:underline">تعديل</a>
-<form method="post" action="/admin/{{ active }}/{{ it.id }}/delete" class="inline" onsubmit="return confirm('حذف؟')"><button class="text-red-400 ms-3">حذف</button></form>{% endif %}
-{% if active=='messages' %}<form method="post" action="/admin/messages/{{ it.id }}/toggle" class="inline"><button class="text-gold-400">تبديل</button></form>{% endif %}
-</td></tr>{% else %}<tr><td colspan="4" class="p-8 text-center text-neutral-500">لا توجد سجلات</td></tr>{% endfor %}</tbody></table>
-</div>{% endblock %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm" style="min-width:500px">
+      <thead>
+        <tr class="bg-ink-600 text-neutral-500 text-xs uppercase tracking-wider">
+          <th class="px-4 py-3 text-right font-semibold">الخدمة</th>
+          <th class="px-4 py-3 text-center font-semibold hidden sm:table-cell">الترتيب</th>
+          <th class="px-4 py-3 text-center font-semibold">الحالة</th>
+          <th class="px-4 py-3 text-center font-semibold hidden md:table-cell">التاريخ</th>
+          <th class="px-4 py-3 text-center font-semibold">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/[0.04]">
+        {% for it in items %}
+        <tr class="hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              {% if it.icon %}<span class="text-lg leading-none">{{ it.icon }}</span>{% endif %}
+              <div>
+                <div class="font-medium text-white">{{ it.title }}</div>
+                <div class="text-xs text-neutral-500 mt-0.5 line-clamp-1">{{ it.short_description[:70] }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-center text-neutral-400 hidden sm:table-cell">{{ it.sort_order }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if it.is_published %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">منشور</span>
+            {% else %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-neutral-700 text-neutral-400 text-xs font-medium">مسودة</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center text-neutral-500 text-xs hidden md:table-cell">{{ it.created_at | fmtdate }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-3">
+              <a href="/admin/services/{{ it.id }}/edit" class="text-gold-400 hover:text-gold-300 text-xs font-medium hover:underline">تعديل</a>
+              <form method="post" action="/admin/services/{{ it.id }}/delete"
+                    onsubmit="return confirm('حذف هذه الخدمة نهائياً؟')">
+                <button class="text-red-400 hover:text-red-300 text-xs font-medium">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="px-4 py-14 text-center">
+          <p class="text-neutral-500 mb-3">لا توجد خدمات بعد</p>
+          <a href="/admin/services/new" class="text-gold-400 hover:underline text-sm">أضف أول خدمة ←</a>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if items %}<div class="px-4 py-3 border-t border-white/[0.04] text-xs text-neutral-600">{{ items | length }} خدمة</div>{% endif %}
+</div>
+{% endblock %}

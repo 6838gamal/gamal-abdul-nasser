@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -79,7 +80,18 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# ── Middleware: منع الكاش لصفحات الإدارة (لا عودة بعد الخروج) ──
+class NoCacheAdminMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/admin"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
 # Middleware order matters (executed bottom-up)
+app.add_middleware(NoCacheAdminMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=600)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY,

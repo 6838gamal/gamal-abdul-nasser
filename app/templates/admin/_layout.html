@@ -1,25 +1,263 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>{% block title %}لوحة التحكم{% endblock %} — {{ site.name }}</title>
 <meta name="robots" content="noindex,nofollow">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Tajawal','sans-serif'],display:['Cairo','serif']},colors:{ink:{900:'#0a0a0a',800:'#0d0d0d',700:'#141414',600:'#1a1a1a'},gold:{300:'#f0d78c',400:'#e6c772',500:'#c9a84c'}}}}}</script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Tajawal','sans-serif'], display: ['Cairo','serif'] },
+      colors: {
+        ink: { 900:'#0a0a0a', 800:'#0d0d0d', 700:'#141414', 600:'#1c1c1c', 500:'#232323' },
+        gold: { 300:'#f0d78c', 400:'#e6c772', 500:'#c9a84c' }
+      }
+    }
+  }
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@700;900&display=swap" rel="stylesheet">
 <script defer src="https://unpkg.com/htmx.org@2.0.3"></script>
 <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+[x-cloak]{display:none!important}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+</style>
+{% block head %}{% endblock %}
 </head>
-<body class="bg-ink-900 text-neutral-100 font-sans min-h-screen flex">
-<aside class="w-64 bg-ink-800 border-l border-white/5 p-5 hidden md:block">
-<a href="/admin" class="flex items-center gap-2 mb-8"><span class="size-9 rounded-xl bg-gold-500 grid place-items-center text-ink-900 font-bold">G</span><span class="font-display font-bold">لوحة التحكم</span></a>
-{% set menu = [('dashboard','/admin','الرئيسية','■'),('articles','/admin/articles','المقالات','✎'),('projects','/admin/projects','المشاريع','◆'),('services','/admin/services','الخدمات','★'),('products','/admin/products','المنتجات','▣'),('categories','/admin/categories','التصنيفات','#'),('seo','/admin/seo','SEO','◎'),('analytics','/admin/analytics','الإحصائيات','▲'),('messages','/admin/messages','الرسائل','✉'),('users','/admin/users','المستخدمون','☺'),('settings','/admin/settings','الإعدادات','⚙')] %}
-<nav class="space-y-1 text-sm">{% for k,url,label,ic in menu %}
-<a href="{{ url }}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if active==k %}bg-gold-500/15 text-gold-300{% else %}hover:bg-white/5{% endif %}"><span class="text-gold-400">{{ ic }}</span>{{ label }}</a>
-{% endfor %}</nav>
-<div class="mt-8 pt-6 border-t border-white/5"><a href="/" class="block text-sm text-neutral-400 hover:text-gold-400 mb-2">← الموقع</a><a href="/admin/logout" class="block text-sm text-red-400 hover:text-red-300">خروج</a></div>
+<body class="bg-ink-900 text-neutral-100 font-sans min-h-screen" x-data="{sideOpen:false}">
+
+<!-- ── Mobile backdrop ── -->
+<div x-show="sideOpen" x-cloak @click="sideOpen=false"
+     x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed inset-0 bg-black/70 backdrop-blur-sm z-30 md:hidden"></div>
+
+<!-- ══════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════ -->
+<aside class="fixed top-0 right-0 h-full w-64 bg-ink-800 border-l border-white/[0.06] z-40 flex flex-col
+              transition-transform duration-300 ease-out"
+       :class="sideOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'">
+
+  <!-- Logo / Brand -->
+  <div class="flex items-center justify-between px-4 py-4 border-b border-white/[0.06] shrink-0">
+    <a href="/admin" class="flex items-center gap-3 min-w-0">
+      <span class="size-9 rounded-xl bg-gold-500 grid place-items-center text-ink-900 font-black text-sm shrink-0">
+        {{ site.nav_logo or 'G' }}
+      </span>
+      <div class="min-w-0">
+        <p class="font-display font-bold text-sm leading-none truncate">لوحة التحكم</p>
+        <p class="text-[10px] text-neutral-500 mt-0.5 truncate">{{ site.name }}</p>
+      </div>
+    </a>
+    <button @click="sideOpen=false" class="md:hidden text-neutral-500 hover:text-white p-1 rounded-lg hover:bg-white/10 shrink-0">
+      <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+
+    {# ── ماكرو عنصر القائمة ── #}
+    {% macro ni(key, url, label) %}
+    <a href="{{ url }}" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active==key else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      {% block _ni_icon %}{% endblock %}
+      {{ label }}
+      {% if caller is defined %}{{ caller() }}{% endif %}
+    </a>
+    {% endmacro %}
+
+    <!-- الرئيسية -->
+    <a href="/admin" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='dashboard' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/></svg>
+      الرئيسية
+    </a>
+
+    <!-- ── المحتوى ── -->
+    <div class="pt-4 pb-1 px-2">
+      <p class="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">المحتوى</p>
+    </div>
+
+    <a href="/admin/articles" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='articles' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      المقالات
+    </a>
+
+    <a href="/admin/projects" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='projects' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+      المشاريع
+    </a>
+
+    <a href="/admin/services" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='services' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      الخدمات
+    </a>
+
+    <!-- ── التجارة ── -->
+    <div class="pt-4 pb-1 px-2">
+      <p class="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">التجارة</p>
+    </div>
+
+    <a href="/admin/products" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='products' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+      المنتجات
+    </a>
+
+    <a href="/admin/orders" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='orders' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      الطلبات
+    </a>
+
+    <!-- ── الإدارة ── -->
+    <div class="pt-4 pb-1 px-2">
+      <p class="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">الإدارة</p>
+    </div>
+
+    <a href="/admin/categories" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='categories' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+      التصنيفات
+    </a>
+
+    <a href="/admin/messages" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='messages' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      الرسائل
+    </a>
+
+    <a href="/admin/users" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='users' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      المستخدمون
+    </a>
+
+    <!-- ── النظام ── -->
+    <div class="pt-4 pb-1 px-2">
+      <p class="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">النظام</p>
+    </div>
+
+    <a href="/admin/analytics" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='analytics' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      الإحصائيات
+    </a>
+
+    <a href="/admin/seo" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='seo' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      تحسين SEO
+    </a>
+
+    <a href="/admin/settings" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='settings' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      الإعدادات
+    </a>
+
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="border-t border-white/[0.06] p-3 shrink-0 space-y-1">
+    <!-- User info -->
+    <div class="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/[0.03] mb-2">
+      <div class="size-8 rounded-full bg-gold-500/20 grid place-items-center text-gold-400 font-bold text-sm shrink-0">
+        {{ user.full_name[0] if user.full_name else 'A' }}
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium leading-none truncate">{{ user.full_name }}</p>
+        <p class="text-[10px] text-neutral-500 mt-0.5 truncate">{{ user.email }}</p>
+      </div>
+    </div>
+    <!-- Visit site -->
+    <a href="/" target="_blank"
+       class="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-neutral-400 hover:text-gold-400 hover:bg-white/[0.04] transition-colors">
+      <svg class="size-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      زيارة الموقع
+    </a>
+    <!-- Logout -->
+    <form method="post" action="/admin/logout">
+      <button type="submit"
+              onclick="return confirm('هل تريد تسجيل الخروج؟')"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-500/[0.08] transition-colors">
+        <svg class="size-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        تسجيل الخروج
+      </button>
+    </form>
+  </div>
+
 </aside>
-<main class="flex-1 p-6 max-w-full overflow-x-auto">
-<header class="flex items-center justify-between mb-6"><h1 class="font-display text-2xl">{% block heading %}{% endblock %}</h1><span class="text-sm text-neutral-400">{{ user.full_name }}</span></header>
-{% block content %}{% endblock %}
-</main></body></html>
+<!-- ══ END SIDEBAR ══ -->
+
+
+<!-- ══════════════════════════════════════════
+     MAIN CONTENT AREA
+══════════════════════════════════════════ -->
+<div class="md:mr-64 flex flex-col min-h-screen">
+
+  <!-- Mobile sticky top bar -->
+  <header class="md:hidden sticky top-0 z-20 bg-ink-800/95 backdrop-blur-md border-b border-white/[0.06] px-4 py-3 flex items-center justify-between shrink-0">
+    <button @click="sideOpen=true" class="p-2 rounded-xl hover:bg-white/10 text-neutral-300 hover:text-white transition-colors">
+      <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <span class="font-display font-bold text-sm">{{ self.heading() }}</span>
+    <a href="/admin" class="size-8 rounded-xl bg-gold-500 grid place-items-center text-ink-900 font-black text-xs">
+      {{ site.nav_logo or 'G' }}
+    </a>
+  </header>
+
+  <!-- Page heading bar (desktop + mobile below topbar) -->
+  <div class="flex items-center justify-between px-4 md:px-6 pt-5 pb-3 gap-4">
+    <h1 class="font-display text-xl md:text-2xl font-bold hidden md:block">{% block heading %}{% endblock %}</h1>
+    <div class="flex items-center gap-3 mr-auto md:mr-0">
+      {% block header_actions %}{% endblock %}
+      <div class="hidden md:flex flex-col items-end">
+        <span class="text-sm font-medium leading-none">{{ user.full_name }}</span>
+        <span class="text-[10px] text-neutral-500 mt-0.5">{{ user.email }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash messages block -->
+  {% block flash %}{% endblock %}
+
+  <!-- Main content -->
+  <main class="flex-1 px-4 md:px-6 pb-8 overflow-x-hidden">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+</body>
+</html>
