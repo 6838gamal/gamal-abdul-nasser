@@ -3,14 +3,14 @@
 <section class="relative overflow-hidden">
   <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(201,168,76,0.15),transparent_60%)]"></div>
   <div class="container mx-auto max-w-6xl px-4 py-24 text-center">
-    <p class="inline-block px-3 py-1 rounded-full text-xs border border-gold-500/40 text-gold-300 mb-6">منصة شخصية احترافية</p>
+    <p class="inline-block px-3 py-1 rounded-full text-xs border border-gold-500/40 text-gold-300 mb-6">{{ content.hero_badge }}</p>
     <h1 class="font-display text-4xl md:text-6xl font-black leading-tight">
       <span class="bg-gradient-to-l from-gold-300 via-gold-400 to-gold-500 bg-clip-text text-transparent">{{ site.author }}</span>
     </h1>
     <p class="mt-6 max-w-2xl mx-auto text-lg text-neutral-300 leading-8">{{ site.description }}</p>
-    <div class="mt-8 flex items-center justify-center gap-3">
-      <a href="/projects" class="px-6 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold hover:bg-gold-400 shadow-glow">شاهد المشاريع</a>
-      <a href="/contact" class="px-6 py-3 rounded-lg border border-white/15 hover:border-gold-400">تواصل معي</a>
+    <div class="mt-8 flex items-center justify-center gap-3 flex-wrap">
+      <a href="{{ content.hero_cta1_url }}" class="px-6 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold hover:bg-gold-400 shadow-glow">{{ content.hero_cta1_text }}</a>
+      <a href="{{ content.hero_cta2_url }}" class="px-6 py-3 rounded-lg border border-white/15 hover:border-gold-400">{{ content.hero_cta2_text }}</a>
     </div>
   </div>
 </section>
@@ -87,8 +87,8 @@
 {% endif %}
 
 <section class="container mx-auto max-w-5xl px-4 py-20 text-center">
-  <h2 class="font-display text-3xl md:text-4xl mb-4">لديك مشروع أو فكرة؟</h2>
-  <p class="text-neutral-400 mb-8">دعنا نحوّلها إلى منتج حقيقي.</p>
-  <a href="/contact" class="px-7 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold hover:bg-gold-400 shadow-glow">ابدأ الآن</a>
+  <h2 class="font-display text-3xl md:text-4xl mb-4">{{ content.cta_title }}</h2>
+  <p class="text-neutral-400 mb-8">{{ content.cta_body }}</p>
+  <a href="/contact" class="px-7 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold hover:bg-gold-400 shadow-glow">{{ content.cta_btn }}</a>
 </section>
 {% endblock %}

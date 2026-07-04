@@ -1,10 +1,28 @@
-"""إدارة إعدادات الموقع من قاعدة البيانات مع كاش في الذاكرة."""
+"""إدارة إعدادات الموقع الكاملة من قاعدة البيانات مع كاش في الذاكرة."""
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.seo import SeoSetting
 from app.core.config import settings as env_settings
 
-SITE_KEYS = ["site_name", "site_author", "site_description", "site_url", "site_locale", "default_og"]
+# جميع المفاتيح القابلة للتعديل
+ALL_KEYS = [
+    # إعدادات الموقع الأساسية
+    "site_name", "site_author", "site_description", "site_url", "site_locale", "default_og",
+    "nav_logo",
+    # الصفحة الرئيسية
+    "hero_badge", "hero_cta1_text", "hero_cta1_url", "hero_cta2_text", "hero_cta2_url",
+    "cta_title", "cta_body", "cta_btn",
+    # صفحة من أنا
+    "about_intro",
+    "about_skills_title", "about_skills",
+    "about_tech_title", "about_tech",
+    "about_exp_title", "about_exp",
+    # التواصل الاجتماعي
+    "social_whatsapp", "social_twitter", "social_linkedin",
+    "social_github", "social_youtube", "social_email",
+    # التذييل
+    "footer_tagline",
+]
 
 _cache: dict = {}
 
@@ -17,12 +35,39 @@ def _defaults() -> dict:
         "site_url": env_settings.APP_URL,
         "site_locale": env_settings.SITE_LOCALE,
         "default_og": env_settings.DEFAULT_OG_IMAGE,
+        "nav_logo": "G",
+        # الصفحة الرئيسية
+        "hero_badge": "منصة شخصية احترافية",
+        "hero_cta1_text": "شاهد المشاريع",
+        "hero_cta1_url": "/projects",
+        "hero_cta2_text": "تواصل معي",
+        "hero_cta2_url": "/contact",
+        "cta_title": "لديك مشروع أو فكرة؟",
+        "cta_body": "دعنا نحوّلها إلى منتج حقيقي.",
+        "cta_btn": "ابدأ الآن",
+        # صفحة من أنا
+        "about_intro": "",
+        "about_skills_title": "المهارات",
+        "about_skills": "تطوير ويب Full Stack\nتصميم منصات\nSEO تقني متقدم",
+        "about_tech_title": "التقنيات",
+        "about_tech": "Python / FastAPI\nPostgreSQL\nTailwind / HTMX",
+        "about_exp_title": "الخبرات",
+        "about_exp": "سنوات في بناء المنصات\nاستشارات تقنية\nقيادة فرق تطوير",
+        # التواصل الاجتماعي
+        "social_whatsapp": "",
+        "social_twitter": "",
+        "social_linkedin": "",
+        "social_github": "",
+        "social_youtube": "",
+        "social_email": "",
+        # التذييل
+        "footer_tagline": "",
     }
 
 
 async def load_site_settings(db: AsyncSession) -> dict:
     rows = (await db.execute(
-        select(SeoSetting).where(SeoSetting.key.in_(SITE_KEYS))
+        select(SeoSetting).where(SeoSetting.key.in_(ALL_KEYS))
     )).scalars().all()
     result = _defaults()
     for row in rows:
@@ -32,16 +77,16 @@ async def load_site_settings(db: AsyncSession) -> dict:
 
 
 async def save_site_settings(db: AsyncSession, data: dict) -> dict:
-    for key in SITE_KEYS:
-        if key not in data:
+    for key, val in data.items():
+        if key not in ALL_KEYS:
             continue
         existing = (await db.execute(
             select(SeoSetting).where(SeoSetting.key == key)
         )).scalar_one_or_none()
         if existing:
-            existing.value = data[key]
+            existing.value = val
         else:
-            db.add(SeoSetting(key=key, value=data[key]))
+            db.add(SeoSetting(key=key, value=val))
     await db.commit()
     _cache.update(data)
     _apply_to_templates()
@@ -54,10 +99,16 @@ def get_cached() -> dict:
     return _cache
 
 
+def _lines(key: str) -> list[str]:
+    """تحويل النص متعدد الأسطر إلى قائمة."""
+    return [l.strip() for l in get_cached().get(key, "").splitlines() if l.strip()]
+
+
 def _apply_to_templates():
     from app.utils.templates import templates
     from datetime import datetime
     c = get_cached()
+
     templates.env.globals["site"] = {
         "name": c.get("site_name", env_settings.APP_NAME),
         "author": c.get("site_author", env_settings.SITE_AUTHOR),
@@ -65,4 +116,34 @@ def _apply_to_templates():
         "url": c.get("site_url", env_settings.APP_URL),
         "year": datetime.now().year,
         "default_og": c.get("default_og", env_settings.DEFAULT_OG_IMAGE),
+    }
+
+    templates.env.globals["content"] = {
+        "nav_logo": c.get("nav_logo", "G"),
+        # الصفحة الرئيسية
+        "hero_badge": c.get("hero_badge", "منصة شخصية احترافية"),
+        "hero_cta1_text": c.get("hero_cta1_text", "شاهد المشاريع"),
+        "hero_cta1_url": c.get("hero_cta1_url", "/projects"),
+        "hero_cta2_text": c.get("hero_cta2_text", "تواصل معي"),
+        "hero_cta2_url": c.get("hero_cta2_url", "/contact"),
+        "cta_title": c.get("cta_title", "لديك مشروع أو فكرة؟"),
+        "cta_body": c.get("cta_body", "دعنا نحوّلها إلى منتج حقيقي."),
+        "cta_btn": c.get("cta_btn", "ابدأ الآن"),
+        # صفحة من أنا
+        "about_intro": c.get("about_intro", ""),
+        "about_skills_title": c.get("about_skills_title", "المهارات"),
+        "about_skills": [l for l in c.get("about_skills", "").splitlines() if l.strip()],
+        "about_tech_title": c.get("about_tech_title", "التقنيات"),
+        "about_tech": [l for l in c.get("about_tech", "").splitlines() if l.strip()],
+        "about_exp_title": c.get("about_exp_title", "الخبرات"),
+        "about_exp": [l for l in c.get("about_exp", "").splitlines() if l.strip()],
+        # التواصل الاجتماعي
+        "social_whatsapp": c.get("social_whatsapp", ""),
+        "social_twitter": c.get("social_twitter", ""),
+        "social_linkedin": c.get("social_linkedin", ""),
+        "social_github": c.get("social_github", ""),
+        "social_youtube": c.get("social_youtube", ""),
+        "social_email": c.get("social_email", ""),
+        # التذييل
+        "footer_tagline": c.get("footer_tagline", ""),
     }

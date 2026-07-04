@@ -1,11 +1,64 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="container mx-auto max-w-5xl px-4 py-16">
-<h1 class="font-display text-4xl mb-6 text-gold-400">من أنا</h1>
-<p class="text-lg leading-9 text-neutral-300">{{ site.author }} — {{ site.description }}</p>
-<div class="grid md:grid-cols-3 gap-6 mt-12">
-  <div class="p-6 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display text-gold-400 mb-3">المهارات</h3><ul class="space-y-2 text-sm text-neutral-300"><li>تطوير ويب Full Stack</li><li>تصميم منصات</li><li>SEO تقني متقدم</li></ul></div>
-  <div class="p-6 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display text-gold-400 mb-3">التقنيات</h3><ul class="space-y-2 text-sm text-neutral-300"><li>Python / FastAPI</li><li>PostgreSQL</li><li>Tailwind / HTMX</li></ul></div>
-  <div class="p-6 rounded-2xl bg-ink-700 border border-white/5"><h3 class="font-display text-gold-400 mb-3">الخبرات</h3><ul class="space-y-2 text-sm text-neutral-300"><li>سنوات في بناء المنصات</li><li>استشارات تقنية</li><li>قيادة فرق تطوير</li></ul></div>
-</div>
-</section>{% endblock %}
+  <h1 class="font-display text-4xl mb-6 text-gold-400">من أنا</h1>
+  <p class="text-lg leading-9 text-neutral-300">
+    {{ content.about_intro if content.about_intro else site.author ~ ' — ' ~ site.description }}
+  </p>
+
+  {% if content.about_skills or content.about_tech or content.about_exp %}
+  <div class="grid md:grid-cols-3 gap-6 mt-12">
+    {% if content.about_skills %}
+    <div class="p-6 rounded-2xl bg-ink-700 border border-white/5">
+      <h3 class="font-display text-gold-400 mb-3">{{ content.about_skills_title }}</h3>
+      <ul class="space-y-2 text-sm text-neutral-300">
+        {% for item in content.about_skills %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if content.about_tech %}
+    <div class="p-6 rounded-2xl bg-ink-700 border border-white/5">
+      <h3 class="font-display text-gold-400 mb-3">{{ content.about_tech_title }}</h3>
+      <ul class="space-y-2 text-sm text-neutral-300">
+        {% for item in content.about_tech %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if content.about_exp %}
+    <div class="p-6 rounded-2xl bg-ink-700 border border-white/5">
+      <h3 class="font-display text-gold-400 mb-3">{{ content.about_exp_title }}</h3>
+      <ul class="space-y-2 text-sm text-neutral-300">
+        {% for item in content.about_exp %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if content.social_email or content.social_whatsapp or content.social_linkedin or content.social_github or content.social_twitter %}
+  <div class="mt-12 p-6 rounded-2xl bg-ink-700 border border-white/5">
+    <h3 class="font-display text-gold-400 mb-4">تواصل معي</h3>
+    <div class="flex flex-wrap gap-3">
+      {% if content.social_email %}
+      <a href="{{ content.social_email }}" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-gold-500/10 hover:text-gold-400 text-sm transition">📧 البريد</a>
+      {% endif %}
+      {% if content.social_whatsapp %}
+      <a href="{{ content.social_whatsapp }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-gold-500/10 hover:text-gold-400 text-sm transition">💬 واتساب</a>
+      {% endif %}
+      {% if content.social_linkedin %}
+      <a href="{{ content.social_linkedin }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-gold-500/10 hover:text-gold-400 text-sm transition">💼 لينكدإن</a>
+      {% endif %}
+      {% if content.social_github %}
+      <a href="{{ content.social_github }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-gold-500/10 hover:text-gold-400 text-sm transition">🐙 GitHub</a>
+      {% endif %}
+      {% if content.social_twitter %}
+      <a href="{{ content.social_twitter }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-gold-500/10 hover:text-gold-400 text-sm transition">🐦 تويتر</a>
+      {% endif %}
+      {% if content.social_youtube %}
+      <a href="{{ content.social_youtube }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-gold-500/10 hover:text-gold-400 text-sm transition">▶️ يوتيوب</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -2,7 +2,28 @@
   <div class="container mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-3 gap-8 text-sm text-neutral-400">
     <div>
       <h4 class="font-display text-gold-400 text-lg mb-3">{{ site.name }}</h4>
-      <p class="leading-7">{{ site.description }}</p>
+      <p class="leading-7">{{ content.footer_tagline if content.footer_tagline else site.description }}</p>
+      {# روابط التواصل الاجتماعي #}
+      <div class="flex flex-wrap gap-2 mt-4">
+        {% if content.social_email %}
+        <a href="{{ content.social_email }}" title="البريد" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">📧</a>
+        {% endif %}
+        {% if content.social_whatsapp %}
+        <a href="{{ content.social_whatsapp }}" target="_blank" rel="noopener" title="واتساب" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">💬</a>
+        {% endif %}
+        {% if content.social_twitter %}
+        <a href="{{ content.social_twitter }}" target="_blank" rel="noopener" title="تويتر" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">🐦</a>
+        {% endif %}
+        {% if content.social_linkedin %}
+        <a href="{{ content.social_linkedin }}" target="_blank" rel="noopener" title="لينكدإن" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">💼</a>
+        {% endif %}
+        {% if content.social_github %}
+        <a href="{{ content.social_github }}" target="_blank" rel="noopener" title="GitHub" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">🐙</a>
+        {% endif %}
+        {% if content.social_youtube %}
+        <a href="{{ content.social_youtube }}" target="_blank" rel="noopener" title="يوتيوب" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">▶️</a>
+        {% endif %}
+      </div>
     </div>
     <div>
       <h4 class="font-display text-white mb-3">روابط</h4>
@@ -14,7 +35,7 @@
       </ul>
     </div>
     <div>
-      <h4 class="font-display text-white mb-3">تابعني</h4>
+      <h4 class="font-display text-white mb-3">أخرى</h4>
       <ul class="space-y-2">
         <li><a href="/rss.xml" class="hover:text-gold-400">RSS Feed</a></li>
         <li><a href="/sitemap.xml" class="hover:text-gold-400">Sitemap</a></li>
@@ -38,7 +59,7 @@
     <button onclick="closeAdminModal()"
             class="absolute top-4 left-4 text-neutral-500 hover:text-white text-lg leading-none">✕</button>
     <div class="flex justify-center mb-6">
-      <span class="size-12 rounded-xl bg-[#c9a84c] grid place-items-center text-[#0a0a0a] font-bold text-xl font-display">G</span>
+      <span class="size-12 rounded-xl bg-[#c9a84c] grid place-items-center text-[#0a0a0a] font-bold text-xl font-display">{{ content.nav_logo or 'G' }}</span>
     </div>
     <h2 class="text-center font-display text-white text-lg mb-6">دخول الإدارة</h2>
     <form id="admin-login-form" onsubmit="submitAdminLogin(event)" class="space-y-4" novalidate>
@@ -65,12 +86,9 @@
 (function () {
   var trigger = document.getElementById('admin-trigger');
   var lastClick = 0;
-
   trigger.addEventListener('click', function () {
     var now = Date.now();
-    if (now - lastClick < 500) {
-      openAdminModal();
-    }
+    if (now - lastClick < 500) { openAdminModal(); }
     lastClick = now;
   });
 })();
@@ -101,15 +119,12 @@ async function submitAdminLogin(e) {
   var err = document.getElementById('al-error');
   var email = document.getElementById('al-email').value.trim();
   var pass = document.getElementById('al-pass').value;
-
   btn.textContent = '...';
   btn.disabled = true;
   err.classList.add('hidden');
-
   var body = new URLSearchParams();
   body.append('email', email);
   body.append('password', pass);
-
   try {
     var res = await fetch('/api/quick-login', {
       method: 'POST',

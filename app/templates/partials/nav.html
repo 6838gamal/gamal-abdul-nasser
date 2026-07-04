@@ -1,7 +1,7 @@
 <header class="sticky top-0 z-40 backdrop-blur bg-ink-900/80 border-b border-white/5">
   <nav class="container mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
     <a href="/" class="flex items-center gap-2 group">
-      <span class="size-9 rounded-xl bg-gradient-to-br from-gold-500 to-gold-300 grid place-items-center font-display font-bold text-ink-900">G</span>
+      <span class="size-9 rounded-xl bg-gradient-to-br from-gold-500 to-gold-300 grid place-items-center font-display font-bold text-ink-900">{{ content.nav_logo or 'G' }}</span>
       <span class="font-display font-bold text-lg group-hover:text-gold-400 transition">{{ site.name }}</span>
     </a>
     <ul class="hidden md:flex items-center gap-7 text-sm">

@@ -3,109 +3,300 @@
 {% block content %}
 
 {% if msg %}
-<div class="mb-4 px-4 py-3 rounded-xl text-sm
+<div id="flash-msg" class="mb-5 px-4 py-3 rounded-xl text-sm
   {% if msg_type == 'success' %}bg-green-500/10 border border-green-500/30 text-green-300
   {% else %}bg-red-500/10 border border-red-500/30 text-red-300{% endif %}">
   {{ msg }}
 </div>
+<script>setTimeout(()=>{var e=document.getElementById('flash-msg');if(e)e.style.transition='opacity .5s',e.style.opacity='0',setTimeout(()=>e.remove(),600)},4000)</script>
 {% endif %}
 
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+<div x-data="{ tab: location.hash.replace('#','') || 'site' }" class="flex gap-6">
 
-  {# ── إعدادات الموقع ── #}
-  <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
-    <h2 class="font-display text-lg text-gold-400 mb-5">إعدادات الموقع</h2>
-    <form method="post" action="/admin/settings/site" class="space-y-4">
-      <div>
-        <label class="block text-xs text-neutral-400 mb-1">اسم الموقع</label>
-        <input name="site_name" value="{{ site_cfg.site_name }}"
-               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
-      </div>
-      <div>
-        <label class="block text-xs text-neutral-400 mb-1">المؤلف / الاسم</label>
-        <input name="site_author" value="{{ site_cfg.site_author }}"
-               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
-      </div>
-      <div>
-        <label class="block text-xs text-neutral-400 mb-1">وصف الموقع</label>
-        <textarea name="site_description" rows="2"
-                  class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">{{ site_cfg.site_description }}</textarea>
-      </div>
-      <div>
-        <label class="block text-xs text-neutral-400 mb-1">رابط الموقع (APP_URL)</label>
-        <input name="site_url" value="{{ site_cfg.site_url }}"
-               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-      </div>
-      <div>
-        <label class="block text-xs text-neutral-400 mb-1">اللغة / الإقليم</label>
-        <input name="site_locale" value="{{ site_cfg.site_locale }}"
-               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-      </div>
-      <div>
-        <label class="block text-xs text-neutral-400 mb-1">مسار صورة OG الافتراضية</label>
-        <input name="default_og" value="{{ site_cfg.default_og }}"
-               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-      </div>
-      <button type="submit"
-              class="w-full bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg py-2 text-sm transition">
-        حفظ إعدادات الموقع
+  {# ── قائمة التبويبات الجانبية ── #}
+  <aside class="w-44 shrink-0">
+    <nav class="space-y-1 sticky top-24">
+      {% set tabs = [
+        ('site',    'الموقع'),
+        ('home',    'الرئيسية'),
+        ('about',   'من أنا'),
+        ('social',  'التواصل'),
+        ('profile', 'الملف الشخصي'),
+        ('password','كلمة المرور'),
+      ] %}
+      {% for id, label in tabs %}
+      <button @click="tab='{{ id }}'; location.hash='{{ id }}'"
+              :class="tab==='{{ id }}' ? 'bg-gold-500/15 text-gold-400 border-gold-500/50' : 'text-neutral-400 border-transparent hover:text-white'"
+              class="w-full text-right px-3 py-2 rounded-lg border text-sm transition">
+        {{ label }}
       </button>
-    </form>
-  </div>
+      {% endfor %}
+    </nav>
+  </aside>
 
-  {# ── الملف الشخصي وكلمة المرور ── #}
-  <div class="space-y-6">
+  {# ── محتوى التبويبات ── #}
+  <div class="flex-1 min-w-0">
 
-    <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
-      <h2 class="font-display text-lg text-gold-400 mb-5">الملف الشخصي</h2>
-      <form method="post" action="/admin/settings/profile" class="space-y-4">
-        <div>
-          <label class="block text-xs text-neutral-400 mb-1">الاسم الكامل</label>
-          <input name="full_name" value="{{ user.full_name }}"
-                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
-        </div>
-        <div>
-          <label class="block text-xs text-neutral-400 mb-1">البريد الإلكتروني</label>
-          <input name="email" type="email" value="{{ user.email }}"
-                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-        </div>
-        <div>
-          <label class="block text-xs text-neutral-400 mb-1">نبذة قصيرة</label>
-          <textarea name="bio" rows="2"
-                    class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">{{ user.bio or '' }}</textarea>
-        </div>
-        <button type="submit"
-                class="w-full bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg py-2 text-sm transition">
-          تحديث الملف الشخصي
-        </button>
-      </form>
+    {# ── 1. إعدادات الموقع ── #}
+    <div x-show="tab==='site'" x-cloak>
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+        <h2 class="font-display text-lg text-gold-400 mb-5">إعدادات الموقع الأساسية</h2>
+        <form method="post" action="/admin/settings/site" class="space-y-4">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">اسم الموقع</label>
+              <input name="site_name" value="{{ site_cfg.site_name }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">الحرف في الشعار</label>
+              <input name="nav_logo" value="{{ site_cfg.nav_logo or 'G' }}" maxlength="3"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500 text-center font-bold text-gold-400">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">المؤلف / الاسم الكامل</label>
+            <input name="site_author" value="{{ site_cfg.site_author }}"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">وصف الموقع (يظهر في الـ SEO)</label>
+            <textarea name="site_description" rows="2"
+                      class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">{{ site_cfg.site_description }}</textarea>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">رابط الموقع (URL)</label>
+              <input name="site_url" value="{{ site_cfg.site_url }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">اللغة / الإقليم</label>
+              <input name="site_locale" value="{{ site_cfg.site_locale }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">مسار صورة OG الافتراضية</label>
+            <input name="default_og" value="{{ site_cfg.default_og }}"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+          </div>
+          <button type="submit"
+                  class="bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg px-6 py-2 text-sm transition">
+            حفظ إعدادات الموقع
+          </button>
+        </form>
+      </div>
     </div>
 
-    <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
-      <h2 class="font-display text-lg text-gold-400 mb-5">تغيير كلمة المرور</h2>
-      <form method="post" action="/admin/settings/password" class="space-y-4">
-        <div>
-          <label class="block text-xs text-neutral-400 mb-1">كلمة المرور الحالية</label>
-          <input name="current_password" type="password" autocomplete="current-password"
-                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-        </div>
-        <div>
-          <label class="block text-xs text-neutral-400 mb-1">كلمة المرور الجديدة</label>
-          <input name="new_password" type="password" autocomplete="new-password"
-                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-        </div>
-        <div>
-          <label class="block text-xs text-neutral-400 mb-1">تأكيد كلمة المرور</label>
-          <input name="confirm_password" type="password" autocomplete="new-password"
-                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
-        </div>
-        <button type="submit"
-                class="w-full bg-white/10 hover:bg-white/15 border border-white/10 font-bold rounded-lg py-2 text-sm transition">
-          تغيير كلمة المرور
-        </button>
-      </form>
+    {# ── 2. الصفحة الرئيسية ── #}
+    <div x-show="tab==='home'" x-cloak>
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+        <h2 class="font-display text-lg text-gold-400 mb-5">نصوص الصفحة الرئيسية</h2>
+        <form method="post" action="/admin/settings/home" class="space-y-5">
+          <fieldset class="border border-white/8 rounded-xl p-4 space-y-4">
+            <legend class="text-xs text-neutral-400 px-2">قسم الهيرو (المقدمة)</legend>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">نص الشارة الصغيرة</label>
+              <input name="hero_badge" value="{{ site_cfg.hero_badge }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                     placeholder="منصة شخصية احترافية">
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs text-neutral-400 mb-1">نص زر CTA الأول</label>
+                <input name="hero_cta1_text" value="{{ site_cfg.hero_cta1_text }}"
+                       class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="block text-xs text-neutral-400 mb-1">رابط زر CTA الأول</label>
+                <input name="hero_cta1_url" value="{{ site_cfg.hero_cta1_url }}"
+                       class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+              </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs text-neutral-400 mb-1">نص زر CTA الثاني</label>
+                <input name="hero_cta2_text" value="{{ site_cfg.hero_cta2_text }}"
+                       class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="block text-xs text-neutral-400 mb-1">رابط زر CTA الثاني</label>
+                <input name="hero_cta2_url" value="{{ site_cfg.hero_cta2_url }}"
+                       class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="border border-white/8 rounded-xl p-4 space-y-4">
+            <legend class="text-xs text-neutral-400 px-2">قسم الدعوة للعمل (أسفل الصفحة)</legend>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">عنوان القسم</label>
+              <input name="cta_title" value="{{ site_cfg.cta_title }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">نص القسم</label>
+              <input name="cta_body" value="{{ site_cfg.cta_body }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">نص الزر</label>
+              <input name="cta_btn" value="{{ site_cfg.cta_btn }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+            </div>
+          </fieldset>
+
+          <button type="submit"
+                  class="bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg px-6 py-2 text-sm transition">
+            حفظ نصوص الرئيسية
+          </button>
+        </form>
+      </div>
     </div>
 
-  </div>
-</div>
+    {# ── 3. صفحة من أنا ── #}
+    <div x-show="tab==='about'" x-cloak>
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+        <h2 class="font-display text-lg text-gold-400 mb-5">صفحة «من أنا»</h2>
+        <form method="post" action="/admin/settings/about" class="space-y-5">
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">مقدمة / نبذة شخصية (اختياري — يستبدل الوصف الافتراضي)</label>
+            <textarea name="about_intro" rows="4"
+                      class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                      placeholder="اكتب نبذتك الشخصية هنا...">{{ site_cfg.about_intro }}</textarea>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">عنوان بطاقة المهارات</label>
+              <input name="about_skills_title" value="{{ site_cfg.about_skills_title }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+              <label class="block text-xs text-neutral-400 mt-3 mb-1">المهارات (كل سطر = عنصر)</label>
+              <textarea name="about_skills" rows="6"
+                        class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                        dir="auto">{{ site_cfg.about_skills }}</textarea>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">عنوان بطاقة التقنيات</label>
+              <input name="about_tech_title" value="{{ site_cfg.about_tech_title }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+              <label class="block text-xs text-neutral-400 mt-3 mb-1">التقنيات (كل سطر = عنصر)</label>
+              <textarea name="about_tech" rows="6"
+                        class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                        dir="auto">{{ site_cfg.about_tech }}</textarea>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">عنوان بطاقة الخبرات</label>
+              <input name="about_exp_title" value="{{ site_cfg.about_exp_title }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+              <label class="block text-xs text-neutral-400 mt-3 mb-1">الخبرات (كل سطر = عنصر)</label>
+              <textarea name="about_exp" rows="6"
+                        class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                        dir="auto">{{ site_cfg.about_exp }}</textarea>
+            </div>
+          </div>
+
+          <button type="submit"
+                  class="bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg px-6 py-2 text-sm transition">
+            حفظ صفحة من أنا
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {# ── 4. التواصل الاجتماعي ── #}
+    <div x-show="tab==='social'" x-cloak>
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+        <h2 class="font-display text-lg text-gold-400 mb-5">روابط التواصل الاجتماعي</h2>
+        <form method="post" action="/admin/settings/social" class="space-y-4">
+          {% set socials = [
+            ('social_email',    '📧 البريد الإلكتروني (mailto:)', 'mailto:email@example.com'),
+            ('social_whatsapp', '💬 واتساب (رابط wa.me)',         'https://wa.me/966xxxxxxxxx'),
+            ('social_twitter',  '🐦 تويتر / X',                  'https://twitter.com/username'),
+            ('social_linkedin', '💼 لينكدإن',                    'https://linkedin.com/in/username'),
+            ('social_github',   '🐙 GitHub',                     'https://github.com/username'),
+            ('social_youtube',  '▶️ يوتيوب',                     'https://youtube.com/@channel'),
+          ] %}
+          {% for key, label, ph in socials %}
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">{{ label }}</label>
+            <input name="{{ key }}" value="{{ site_cfg[key] }}" placeholder="{{ ph }}"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+          </div>
+          {% endfor %}
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">نص التذييل الإضافي (اختياري)</label>
+            <input name="footer_tagline" value="{{ site_cfg.footer_tagline }}"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                   placeholder="مثال: مطور ويب مستقل">
+          </div>
+          <button type="submit"
+                  class="bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg px-6 py-2 text-sm transition">
+            حفظ روابط التواصل
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {# ── 5. الملف الشخصي ── #}
+    <div x-show="tab==='profile'" x-cloak>
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+        <h2 class="font-display text-lg text-gold-400 mb-5">الملف الشخصي</h2>
+        <form method="post" action="/admin/settings/profile" class="space-y-4">
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">الاسم الكامل</label>
+            <input name="full_name" value="{{ user.full_name }}"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">البريد الإلكتروني</label>
+            <input name="email" type="email" value="{{ user.email }}"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">نبذة قصيرة</label>
+            <textarea name="bio" rows="3"
+                      class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">{{ user.bio or '' }}</textarea>
+          </div>
+          <button type="submit"
+                  class="bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg px-6 py-2 text-sm transition">
+            تحديث الملف الشخصي
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {# ── 6. كلمة المرور ── #}
+    <div x-show="tab==='password'" x-cloak>
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+        <h2 class="font-display text-lg text-gold-400 mb-5">تغيير كلمة المرور</h2>
+        <form method="post" action="/admin/settings/password" class="space-y-4 max-w-md">
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">كلمة المرور الحالية</label>
+            <input name="current_password" type="password" autocomplete="current-password"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">كلمة المرور الجديدة</label>
+            <input name="new_password" type="password" autocomplete="new-password"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+          </div>
+          <div>
+            <label class="block text-xs text-neutral-400 mb-1">تأكيد كلمة المرور</label>
+            <input name="confirm_password" type="password" autocomplete="new-password"
+                   class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+          </div>
+          <button type="submit"
+                  class="bg-white/10 hover:bg-white/15 border border-white/10 font-bold rounded-lg px-6 py-2 text-sm transition">
+            تغيير كلمة المرور
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>{# end content area #}
+</div>{# end flex #}
+
+<style>[x-cloak]{display:none!important}</style>
 {% endblock %}

@@ -502,6 +502,7 @@ async def settings_site_save(
         site_name: str = Form(...), site_author: str = Form(...),
         site_description: str = Form(...), site_url: str = Form(...),
         site_locale: str = Form("ar_SA"), default_og: str = Form(""),
+        nav_logo: str = Form("G"),
         db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
     await save_site_settings(db, {
         "site_name": site_name.strip(),
@@ -510,11 +511,85 @@ async def settings_site_save(
         "site_url": site_url.strip(),
         "site_locale": site_locale.strip(),
         "default_og": default_og.strip(),
+        "nav_logo": nav_logo.strip() or "G",
     })
     site_cfg = await load_site_settings(db)
     return templates.TemplateResponse("admin/settings.html", {
         "request": request, "user": user, "active": "settings",
         "site_cfg": site_cfg, "msg": "✓ تم حفظ إعدادات الموقع بنجاح", "msg_type": "success",
+    })
+
+
+@router.post("/settings/home")
+async def settings_home_save(
+        request: Request,
+        hero_badge: str = Form(""),
+        hero_cta1_text: str = Form(""), hero_cta1_url: str = Form(""),
+        hero_cta2_text: str = Form(""), hero_cta2_url: str = Form(""),
+        cta_title: str = Form(""), cta_body: str = Form(""), cta_btn: str = Form(""),
+        db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    await save_site_settings(db, {
+        "hero_badge": hero_badge.strip(),
+        "hero_cta1_text": hero_cta1_text.strip(),
+        "hero_cta1_url": hero_cta1_url.strip(),
+        "hero_cta2_text": hero_cta2_text.strip(),
+        "hero_cta2_url": hero_cta2_url.strip(),
+        "cta_title": cta_title.strip(),
+        "cta_body": cta_body.strip(),
+        "cta_btn": cta_btn.strip(),
+    })
+    site_cfg = await load_site_settings(db)
+    return templates.TemplateResponse("admin/settings.html", {
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": "✓ تم حفظ نصوص الصفحة الرئيسية بنجاح", "msg_type": "success",
+    })
+
+
+@router.post("/settings/about")
+async def settings_about_save(
+        request: Request,
+        about_intro: str = Form(""),
+        about_skills_title: str = Form(""), about_skills: str = Form(""),
+        about_tech_title: str = Form(""), about_tech: str = Form(""),
+        about_exp_title: str = Form(""), about_exp: str = Form(""),
+        db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    await save_site_settings(db, {
+        "about_intro": about_intro.strip(),
+        "about_skills_title": about_skills_title.strip(),
+        "about_skills": about_skills.strip(),
+        "about_tech_title": about_tech_title.strip(),
+        "about_tech": about_tech.strip(),
+        "about_exp_title": about_exp_title.strip(),
+        "about_exp": about_exp.strip(),
+    })
+    site_cfg = await load_site_settings(db)
+    return templates.TemplateResponse("admin/settings.html", {
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": "✓ تم حفظ صفحة «من أنا» بنجاح", "msg_type": "success",
+    })
+
+
+@router.post("/settings/social")
+async def settings_social_save(
+        request: Request,
+        social_email: str = Form(""),
+        social_whatsapp: str = Form(""), social_twitter: str = Form(""),
+        social_linkedin: str = Form(""), social_github: str = Form(""),
+        social_youtube: str = Form(""), footer_tagline: str = Form(""),
+        db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    await save_site_settings(db, {
+        "social_email": social_email.strip(),
+        "social_whatsapp": social_whatsapp.strip(),
+        "social_twitter": social_twitter.strip(),
+        "social_linkedin": social_linkedin.strip(),
+        "social_github": social_github.strip(),
+        "social_youtube": social_youtube.strip(),
+        "footer_tagline": footer_tagline.strip(),
+    })
+    site_cfg = await load_site_settings(db)
+    return templates.TemplateResponse("admin/settings.html", {
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": "✓ تم حفظ روابط التواصل الاجتماعي بنجاح", "msg_type": "success",
     })
 
 
