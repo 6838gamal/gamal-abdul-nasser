@@ -72,7 +72,8 @@ class Settings(BaseSettings):
 
 
 def _build_settings() -> "Settings":
-    raw_db = os.environ.get("DATABASE_URL", "")
+    # Prefer the explicit Render URL over the Replit-managed DATABASE_URL
+    raw_db = os.environ.get("RENDER_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
     kwargs: dict = {}
     if raw_db:
         kwargs["DATABASE_URL"] = raw_db
