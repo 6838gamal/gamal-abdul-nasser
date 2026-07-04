@@ -1,8 +1,111 @@
-{% extends 'admin/_layout.html' %}{% block heading %}الإعدادات{% endblock %}{% block content %}
-<div class="rounded-2xl bg-ink-700 border border-white/5 p-6 space-y-3 text-sm">
-<p><strong>اسم التطبيق:</strong> {{ settings.APP_NAME }}</p>
-<p><strong>عنوان الموقع:</strong> {{ settings.APP_URL }}</p>
-<p><strong>المؤلف:</strong> {{ settings.SITE_AUTHOR }}</p>
-<p><strong>البيئة:</strong> {{ settings.ENVIRONMENT }}</p>
-<p class="text-neutral-400 mt-4">عدِّل المتغيرات في ملف <code>.env</code> ثم أعد تشغيل الخدمة.</p>
-</div>{% endblock %}
+{% extends 'admin/_layout.html' %}
+{% block heading %}الإعدادات{% endblock %}
+{% block content %}
+
+{% if msg %}
+<div class="mb-4 px-4 py-3 rounded-xl text-sm
+  {% if msg_type == 'success' %}bg-green-500/10 border border-green-500/30 text-green-300
+  {% else %}bg-red-500/10 border border-red-500/30 text-red-300{% endif %}">
+  {{ msg }}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+  {# ── إعدادات الموقع ── #}
+  <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+    <h2 class="font-display text-lg text-gold-400 mb-5">إعدادات الموقع</h2>
+    <form method="post" action="/admin/settings/site" class="space-y-4">
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">اسم الموقع</label>
+        <input name="site_name" value="{{ site_cfg.site_name }}"
+               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+      </div>
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">المؤلف / الاسم</label>
+        <input name="site_author" value="{{ site_cfg.site_author }}"
+               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+      </div>
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">وصف الموقع</label>
+        <textarea name="site_description" rows="2"
+                  class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">{{ site_cfg.site_description }}</textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">رابط الموقع (APP_URL)</label>
+        <input name="site_url" value="{{ site_cfg.site_url }}"
+               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+      </div>
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">اللغة / الإقليم</label>
+        <input name="site_locale" value="{{ site_cfg.site_locale }}"
+               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+      </div>
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">مسار صورة OG الافتراضية</label>
+        <input name="default_og" value="{{ site_cfg.default_og }}"
+               class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+      </div>
+      <button type="submit"
+              class="w-full bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg py-2 text-sm transition">
+        حفظ إعدادات الموقع
+      </button>
+    </form>
+  </div>
+
+  {# ── الملف الشخصي وكلمة المرور ── #}
+  <div class="space-y-6">
+
+    <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+      <h2 class="font-display text-lg text-gold-400 mb-5">الملف الشخصي</h2>
+      <form method="post" action="/admin/settings/profile" class="space-y-4">
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">الاسم الكامل</label>
+          <input name="full_name" value="{{ user.full_name }}"
+                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">
+        </div>
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">البريد الإلكتروني</label>
+          <input name="email" type="email" value="{{ user.email }}"
+                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+        </div>
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">نبذة قصيرة</label>
+          <textarea name="bio" rows="2"
+                    class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500">{{ user.bio or '' }}</textarea>
+        </div>
+        <button type="submit"
+                class="w-full bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold rounded-lg py-2 text-sm transition">
+          تحديث الملف الشخصي
+        </button>
+      </form>
+    </div>
+
+    <div class="rounded-2xl bg-ink-700 border border-white/5 p-6">
+      <h2 class="font-display text-lg text-gold-400 mb-5">تغيير كلمة المرور</h2>
+      <form method="post" action="/admin/settings/password" class="space-y-4">
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">كلمة المرور الحالية</label>
+          <input name="current_password" type="password" autocomplete="current-password"
+                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+        </div>
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">كلمة المرور الجديدة</label>
+          <input name="new_password" type="password" autocomplete="new-password"
+                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+        </div>
+        <div>
+          <label class="block text-xs text-neutral-400 mb-1">تأكيد كلمة المرور</label>
+          <input name="confirm_password" type="password" autocomplete="new-password"
+                 class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500" dir="ltr">
+        </div>
+        <button type="submit"
+                class="w-full bg-white/10 hover:bg-white/15 border border-white/10 font-bold rounded-lg py-2 text-sm transition">
+          تغيير كلمة المرور
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -20,6 +20,8 @@ from app.models.analytics import PageView
 from app.models.seo import Redirect
 from app.seo.indexing import ping_search_engines, google_indexing_request
 from app.core.config import settings
+from app.core.security import hash_password, verify_password
+from app.utils.site_settings import load_site_settings, save_site_settings
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 
@@ -482,9 +484,91 @@ async def users_list(request: Request, db: AsyncSession = Depends(get_db),
     })
 
 
-# ============ Settings (placeholder) ============
+# ============ Settings ============
 @router.get("/settings")
-async def settings_page(request: Request, user: User = Depends(require_admin)):
+async def settings_page(request: Request, db: AsyncSession = Depends(get_db),
+                        user: User = Depends(require_admin),
+                        msg: str = "", msg_type: str = "success"):
+    site_cfg = await load_site_settings(db)
     return templates.TemplateResponse("admin/settings.html", {
-        "request": request, "user": user, "active": "settings", "settings": settings,
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": msg, "msg_type": msg_type,
+    })
+
+
+@router.post("/settings/site")
+async def settings_site_save(
+        request: Request,
+        site_name: str = Form(...), site_author: str = Form(...),
+        site_description: str = Form(...), site_url: str = Form(...),
+        site_locale: str = Form("ar_SA"), default_og: str = Form(""),
+        db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    await save_site_settings(db, {
+        "site_name": site_name.strip(),
+        "site_author": site_author.strip(),
+        "site_description": site_description.strip(),
+        "site_url": site_url.strip(),
+        "site_locale": site_locale.strip(),
+        "default_og": default_og.strip(),
+    })
+    site_cfg = await load_site_settings(db)
+    return templates.TemplateResponse("admin/settings.html", {
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": "✓ تم حفظ إعدادات الموقع بنجاح", "msg_type": "success",
+    })
+
+
+@router.post("/settings/profile")
+async def settings_profile_save(
+        request: Request,
+        full_name: str = Form(...), email: str = Form(...), bio: str = Form(""),
+        db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    from sqlalchemy import select as sa_select
+    from app.models.user import User as UserModel
+    conflict = (await db.execute(
+        sa_select(UserModel).where(UserModel.email == email.strip(), UserModel.id != user.id)
+    )).scalar_one_or_none()
+    site_cfg = await load_site_settings(db)
+    if conflict:
+        return templates.TemplateResponse("admin/settings.html", {
+            "request": request, "user": user, "active": "settings",
+            "site_cfg": site_cfg, "msg": "✗ البريد الإلكتروني مستخدم بالفعل", "msg_type": "error",
+        })
+    user.full_name = full_name.strip()
+    user.email = email.strip()
+    user.bio = bio.strip() or None
+    await db.commit()
+    await db.refresh(user)
+    return templates.TemplateResponse("admin/settings.html", {
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": "✓ تم تحديث الملف الشخصي بنجاح", "msg_type": "success",
+    })
+
+
+@router.post("/settings/password")
+async def settings_password_save(
+        request: Request,
+        current_password: str = Form(...),
+        new_password: str = Form(...),
+        confirm_password: str = Form(...),
+        db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    site_cfg = await load_site_settings(db)
+
+    def fail(msg):
+        return templates.TemplateResponse("admin/settings.html", {
+            "request": request, "user": user, "active": "settings",
+            "site_cfg": site_cfg, "msg": msg, "msg_type": "error",
+        })
+
+    if not verify_password(current_password, user.hashed_password):
+        return fail("✗ كلمة المرور الحالية غير صحيحة")
+    if len(new_password) < 8:
+        return fail("✗ كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل")
+    if new_password != confirm_password:
+        return fail("✗ كلمتا المرور الجديدتان غير متطابقتين")
+    user.hashed_password = hash_password(new_password)
+    await db.commit()
+    return templates.TemplateResponse("admin/settings.html", {
+        "request": request, "user": user, "active": "settings",
+        "site_cfg": site_cfg, "msg": "✓ تم تغيير كلمة المرور بنجاح", "msg_type": "success",
     })

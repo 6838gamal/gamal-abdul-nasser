@@ -44,6 +44,10 @@ async def lifespan(app: FastAPI):
                         bio="مؤسس المنصة"))
             await db.commit()
             log.info("✓ تم إنشاء حساب المدير الافتراضي: %s", settings.ADMIN_EMAIL)
+        # تحميل إعدادات الموقع من قاعدة البيانات وتطبيقها على القوالب
+        from app.utils.site_settings import load_site_settings, _apply_to_templates
+        await load_site_settings(db)
+        _apply_to_templates()
     yield
 
 
