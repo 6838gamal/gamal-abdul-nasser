@@ -65,10 +65,14 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
 
+    # ─── قاعدة البيانات PostgreSQL ────────────────────────────────
+    # رابط الاتصال بقاعدة البيانات — يبدأ بـ postgresql://
+    # مثال Supabase:  postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres
+    # مثال Render:    postgresql://user:pass@host:5432/dbname
+    # ⚠️  هذا الرابط مختلف تماماً عن SUPABASE_URL أدناه
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/gan_platform"
     SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/gan_platform"
-    # هل يجب استخدام SSL للاتصال بقاعدة البيانات (يُحدَّد تلقائياً)
-    DB_USE_SSL: bool = False
+    DB_USE_SSL: bool = False  # يُكتشف تلقائياً من الرابط
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
@@ -89,13 +93,17 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_MB: int = 50
 
-    # ─── Supabase Storage ─────────────────────────────────────────
+    # ─── Supabase Storage API ─────────────────────────────────────
+    # هذه الإعدادات لـ Supabase Storage (رفع الملفات والصور) فقط
+    # SUPABASE_URL = رابط HTTP لمشروع Supabase يبدأ بـ https://
+    # مثال: https://bmaqlynnbhbnrsbuboim.supabase.co
+    # ⚠️  هذا الرابط مختلف تماماً عن DATABASE_URL أعلاه
     SUPABASE_URL: str = ""
-    SUPABASE_SECRET_KEY: str = ""   # service role key
+    SUPABASE_SECRET_KEY: str = ""   # مفتاح service role من Supabase → Settings → API
     SUPABASE_PUBLISHABLE_KEY: str = ""
     SUPABASE_BUCKET: str = "uploads"
 
-    # حجم connection pool لكل worker
+    # ─── إعدادات Connection Pool ──────────────────────────────────
     DB_POOL_SIZE: int = 3
     DB_POOL_MAX_OVERFLOW: int = 7
     DB_POOL_RECYCLE: int = 300  # ثانية (5 دقائق)
