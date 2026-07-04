@@ -8,6 +8,8 @@ from app.models.user import User
 from app.core.security import verify_password, create_access_token
 from app.utils.templates import templates
 
+from fastapi.responses import JSONResponse
+
 router = APIRouter()
 
 
@@ -35,4 +37,17 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
 async def logout():
     resp = RedirectResponse("/admin/login", status_code=303)
     resp.delete_cookie("access_token", path="/")
+    return resp
+
+
+@router.post("/api/quick-login")
+async def quick_login(request: Request, email: str = Form(...), password: str = Form(...),
+                      db: AsyncSession = Depends(get_db)):
+    user = (await db.execute(select(User).where(User.email == email.strip().lower()))).scalar_one_or_none()
+    if not user or not user.is_admin or not verify_password(password, user.hashed_password):
+        return JSONResponse({"ok": False, "error": "البريد أو كلمة المرور غير صحيحة"}, status_code=401)
+    token = create_access_token(user.email, {"uid": user.id})
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie("access_token", token, httponly=True, samesite="lax",
+                    secure=False, max_age=60 * 60 * 4, path="/")
     return resp

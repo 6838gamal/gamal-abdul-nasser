@@ -23,6 +23,113 @@
     </div>
   </div>
   <div class="border-t border-white/5 py-5 text-center text-xs text-neutral-500">
-    © {{ site.year }} {{ site.author }} — جميع الحقوق محفوظة
+    © {{ site.year }} {{ site.author }} —
+    <span id="admin-trigger"
+          class="cursor-default select-none"
+          title="">جميع الحقوق محفوظة</span>
   </div>
 </footer>
+
+<!-- نافذة تسجيل الدخول السرية -->
+<div id="admin-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm"
+     onclick="if(event.target===this)closeAdminModal()">
+  <div class="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm shadow-2xl relative">
+    <button onclick="closeAdminModal()"
+            class="absolute top-4 left-4 text-neutral-500 hover:text-white text-lg leading-none">✕</button>
+    <div class="flex justify-center mb-6">
+      <span class="size-12 rounded-xl bg-[#c9a84c] grid place-items-center text-[#0a0a0a] font-bold text-xl font-display">G</span>
+    </div>
+    <h2 class="text-center font-display text-white text-lg mb-6">دخول الإدارة</h2>
+    <form id="admin-login-form" onsubmit="submitAdminLogin(event)" class="space-y-4" novalidate>
+      <div>
+        <input id="al-email" type="email" name="email" placeholder="البريد الإلكتروني"
+               autocomplete="username" dir="ltr"
+               class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#c9a84c] transition">
+      </div>
+      <div>
+        <input id="al-pass" type="password" name="password" placeholder="كلمة المرور"
+               autocomplete="current-password" dir="ltr"
+               class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#c9a84c] transition">
+      </div>
+      <p id="al-error" class="text-red-400 text-xs text-center hidden"></p>
+      <button type="submit" id="al-btn"
+              class="w-full bg-[#c9a84c] hover:bg-[#e6c772] text-[#0a0a0a] font-bold rounded-lg py-2.5 text-sm transition">
+        دخول
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var trigger = document.getElementById('admin-trigger');
+  var lastClick = 0;
+
+  trigger.addEventListener('click', function () {
+    var now = Date.now();
+    if (now - lastClick < 500) {
+      openAdminModal();
+    }
+    lastClick = now;
+  });
+})();
+
+function openAdminModal() {
+  var m = document.getElementById('admin-modal');
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  document.getElementById('al-email').focus();
+  document.getElementById('al-error').classList.add('hidden');
+  document.getElementById('al-email').value = '';
+  document.getElementById('al-pass').value = '';
+}
+
+function closeAdminModal() {
+  var m = document.getElementById('admin-modal');
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closeAdminModal();
+});
+
+async function submitAdminLogin(e) {
+  e.preventDefault();
+  var btn = document.getElementById('al-btn');
+  var err = document.getElementById('al-error');
+  var email = document.getElementById('al-email').value.trim();
+  var pass = document.getElementById('al-pass').value;
+
+  btn.textContent = '...';
+  btn.disabled = true;
+  err.classList.add('hidden');
+
+  var body = new URLSearchParams();
+  body.append('email', email);
+  body.append('password', pass);
+
+  try {
+    var res = await fetch('/api/quick-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
+    var data = await res.json();
+    if (data.ok) {
+      window.location.href = '/admin';
+    } else {
+      err.textContent = data.error || 'بيانات غير صحيحة';
+      err.classList.remove('hidden');
+      btn.textContent = 'دخول';
+      btn.disabled = false;
+    }
+  } catch (ex) {
+    err.textContent = 'حدث خطأ، حاول مجدداً';
+    err.classList.remove('hidden');
+    btn.textContent = 'دخول';
+    btn.disabled = false;
+  }
+}
+</script>
