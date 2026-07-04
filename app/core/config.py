@@ -6,14 +6,37 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _needs_ssl(raw_url: str) -> bool:
+    """هل يحتاج الاتصال بقاعدة البيانات إلى SSL؟
+    نعم دائماً إذا لم يكن localhost/127.0.0.1/db (Docker Compose)."""
+    if not raw_url:
+        return False
+    try:
+        parsed = urlparse(raw_url)
+        host = (parsed.hostname or "").lower()
+        params = parse_qs(parsed.query)
+        sslmode = params.get("sslmode", [""])[0].lower()
+        if sslmode == "disable":
+            return False
+        if host in ("localhost", "127.0.0.1", "db", "postgres"):
+            return False
+        # أي خادم خارجي → SSL مطلوب
+        return True
+    except Exception:
+        return False
+
+
 def _to_asyncpg_url(url: str) -> str:
-    """Convert a standard postgresql:// URL to asyncpg format, stripping incompatible params."""
+    """تحويل رابط postgresql:// إلى asyncpg مع حذف المعاملات غير المتوافقة."""
     for prefix in ("postgresql://", "postgres://"):
         if url.startswith(prefix):
             parsed = urlparse(url)
             params = parse_qs(parsed.query, keep_blank_values=True)
-            # asyncpg does not accept sslmode as a query param
+            # asyncpg لا يقبل sslmode كمعامل URL — يُعالَج عبر connect_args
             params.pop("sslmode", None)
+            params.pop("sslcert", None)
+            params.pop("sslkey", None)
+            params.pop("sslrootcert", None)
             new_query = urlencode({k: v[0] for k, v in params.items()})
             new_parsed = parsed._replace(scheme="postgresql+asyncpg", query=new_query)
             return urlunparse(new_parsed)
@@ -21,11 +44,16 @@ def _to_asyncpg_url(url: str) -> str:
 
 
 def _to_psycopg2_url(url: str) -> str:
-    """Convert a standard postgresql:// URL to psycopg2 format."""
-    for prefix in ("postgresql://", "postgres://"):
+    """تحويل رابط postgresql:// إلى psycopg2 مع حذف المعاملات غير المتوافقة."""
+    for prefix in ("postgresql://", "postgres://", "postgresql+asyncpg://"):
         if url.startswith(prefix):
             parsed = urlparse(url)
-            new_parsed = parsed._replace(scheme="postgresql+psycopg2")
+            params = parse_qs(parsed.query, keep_blank_values=True)
+            params.pop("sslrootcert", None)
+            params.pop("sslcert", None)
+            params.pop("sslkey", None)
+            new_query = urlencode({k: v[0] for k, v in params.items()})
+            new_parsed = parsed._replace(scheme="postgresql+psycopg2", query=new_query)
             return urlunparse(new_parsed)
     return url
 
@@ -39,6 +67,9 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/gan_platform"
     SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/gan_platform"
+    # هل يجب استخدام SSL للاتصال بقاعدة البيانات (يُحدَّد تلقائياً)
+    DB_USE_SSL: bool = False
+
     REDIS_URL: str = "redis://localhost:6379/0"
 
     ADMIN_EMAIL: str = "admin@example.com"
@@ -58,6 +89,12 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_MB: int = 50
 
+    # حجم connection pool لكل worker
+    DB_POOL_SIZE: int = 3
+    DB_POOL_MAX_OVERFLOW: int = 7
+    DB_POOL_RECYCLE: int = 300  # ثانية (5 دقائق)
+    DB_POOL_TIMEOUT: int = 30   # ثانية
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
     @field_validator("DATABASE_URL", mode="before")
@@ -72,12 +109,14 @@ class Settings(BaseSettings):
 
 
 def _build_settings() -> "Settings":
-    # Prefer the explicit Render URL over the Replit-managed DATABASE_URL
     raw_db = os.environ.get("RENDER_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
     kwargs: dict = {}
     if raw_db:
         kwargs["DATABASE_URL"] = raw_db
         kwargs["SYNC_DATABASE_URL"] = raw_db
+        # كشف SSL تلقائياً من الرابط الأصلي
+        if "DB_USE_SSL" not in os.environ:
+            kwargs["DB_USE_SSL"] = _needs_ssl(raw_db)
     return Settings(**kwargs)
 
 
