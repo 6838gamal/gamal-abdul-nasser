@@ -1,11 +1,15 @@
 """وكيل الذكاء الاصطناعي — نقطة نهاية المحادثة."""
 import logging
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.database.session import get_db
+from app.models.knowledge import KnowledgeEntry
 
 log = logging.getLogger("app")
 router = APIRouter(prefix="/api")
@@ -65,11 +69,25 @@ def _extract_text(result: dict) -> str:
     return text_output.strip()
 
 
-async def _ask_gemini(message: str, history: list[ChatMessage]) -> str:
+async def _load_knowledge_context(db: AsyncSession) -> str:
+    """جلب المعرفة المفعّلة التي غذّاها المدير للوكيل الذكي."""
+    entries = (await db.execute(
+        select(KnowledgeEntry).where(KnowledgeEntry.is_active == True).order_by(KnowledgeEntry.created_at.desc())
+    )).scalars().all()
+    if not entries:
+        return ""
+    blocks = [f"- {e.title}:\n{e.content}" for e in entries]
+    return "\n\nمعلومات إضافية زوّدك بها المدير لاستخدامها في الإجابة:\n" + "\n\n".join(blocks)
+
+
+async def _ask_gemini(message: str, history: list[ChatMessage], db: AsyncSession) -> str:
     if not settings.GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY غير مضبوط")
 
-    contents = [{"role": "user", "parts": [{"text": SYSTEM_INSTRUCTION}]},
+    knowledge_context = await _load_knowledge_context(db)
+    system_prompt = SYSTEM_INSTRUCTION + knowledge_context
+
+    contents = [{"role": "user", "parts": [{"text": system_prompt}]},
                 {"role": "model", "parts": [{"text": "حسناً، سأتصرف كوكيل الذكاء الاصطناعي لمنصة جمال المقطري."}]}]
     for m in history:
         role = "model" if m.role == "model" else "user"
@@ -93,9 +111,9 @@ async def _ask_gemini(message: str, history: list[ChatMessage]) -> str:
 
 # ─── نقطة النهاية ────────────────────────────────────────────────
 @router.post("/chat")
-async def chat(req: ChatRequest, request: Request):
+async def chat(req: ChatRequest, request: Request, db: AsyncSession = Depends(get_db)):
     try:
-        reply = await _ask_gemini(req.message, req.history)
+        reply = await _ask_gemini(req.message, req.history, db)
         return {"reply": reply}
 
     except Exception as exc:

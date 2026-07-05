@@ -18,6 +18,7 @@ from app.models.product import Product, Order
 from app.models.message import Message
 from app.models.analytics import PageView
 from app.models.seo import Redirect, CustomSitemapURL
+from app.models.knowledge import KnowledgeEntry
 from app.seo.indexing import ping_search_engines, google_indexing_request
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
@@ -418,6 +419,62 @@ async def cat_add(name: str = Form(...), description: str = Form(""),
     db.add(Category(name=name.strip(), slug=slugify(name), description=description or None))
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=303)
+
+
+# ============ إدارة وتدريب الوكيل الذكي (Knowledge Base) ============
+@router.get("/knowledge")
+async def knowledge_list(request: Request, db: AsyncSession = Depends(get_db),
+                          user: User = Depends(require_admin)):
+    items = (await db.execute(select(KnowledgeEntry).order_by(KnowledgeEntry.created_at.desc()))).scalars().all()
+    return templates.TemplateResponse("admin/knowledge_list.html", {
+        "request": request, "items": items, "user": user, "active": "knowledge",
+    })
+
+
+@router.get("/knowledge/new")
+@router.get("/knowledge/{kid}/edit")
+async def knowledge_form(request: Request, kid: int | None = None,
+                          db: AsyncSession = Depends(get_db),
+                          user: User = Depends(require_admin)):
+    k = await db.get(KnowledgeEntry, kid) if kid else None
+    return templates.TemplateResponse("admin/knowledge_form.html", {
+        "request": request, "k": k, "user": user, "active": "knowledge",
+    })
+
+
+@router.post("/knowledge/save")
+async def knowledge_save(kid: int = Form(0), title: str = Form(...),
+                          content: str = Form(...), is_active: bool = Form(False),
+                          db: AsyncSession = Depends(get_db),
+                          user: User = Depends(require_admin)):
+    k = await db.get(KnowledgeEntry, kid) if kid else KnowledgeEntry()
+    k.title = title.strip()
+    k.content = content.strip()
+    k.is_active = is_active
+    if not kid:
+        db.add(k)
+    await db.commit()
+    return RedirectResponse("/admin/knowledge", status_code=303)
+
+
+@router.post("/knowledge/{kid}/toggle")
+async def knowledge_toggle(kid: int, db: AsyncSession = Depends(get_db),
+                            user: User = Depends(require_admin)):
+    k = await db.get(KnowledgeEntry, kid)
+    if k:
+        k.is_active = not k.is_active
+        await db.commit()
+    return RedirectResponse("/admin/knowledge", status_code=303)
+
+
+@router.post("/knowledge/{kid}/delete")
+async def knowledge_delete(kid: int, db: AsyncSession = Depends(get_db),
+                            user: User = Depends(require_admin)):
+    k = await db.get(KnowledgeEntry, kid)
+    if k:
+        await db.delete(k)
+        await db.commit()
+    return RedirectResponse("/admin/knowledge", status_code=303)
 
 
 # ============ SEO + Redirects + Re-indexing ============

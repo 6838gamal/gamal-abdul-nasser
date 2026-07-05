@@ -6,3 +6,4 @@ from .product import Product, Order
 from .message import Message
 from .analytics import PageView
 from .seo import Redirect, SeoSetting, CustomSitemapURL
+from .knowledge import KnowledgeEntry

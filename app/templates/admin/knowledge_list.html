@@ -1,0 +1,64 @@
+{% extends 'admin/_layout.html' %}
+{% block heading %}إدارة وتدريب الوكيل الذكي{% endblock %}
+{% block header_actions %}
+<a href="/admin/knowledge/new"
+   class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-ink-900 font-bold text-sm transition-colors">
+  <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+  معرفة جديدة
+</a>
+{% endblock %}
+{% block content %}
+<div class="mb-4 p-4 rounded-2xl bg-ink-700 border border-white/5 text-sm text-neutral-400 leading-relaxed">
+  هنا يمكنك تغذية الوكيل الذكي (المساعد في الشات) بمعلومات ومعرفة إضافية عنك أو عن خدماتك، سيقوم الوكيل باستخدام كل عنصر "مُفعّل" كمرجع عند الرد على زوار الموقع.
+</div>
+<div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm" style="min-width:500px">
+      <thead>
+        <tr class="bg-ink-600 text-neutral-500 text-xs uppercase tracking-wider">
+          <th class="px-4 py-3 text-right font-semibold">العنوان</th>
+          <th class="px-4 py-3 text-right font-semibold hidden md:table-cell">مقتطف من المحتوى</th>
+          <th class="px-4 py-3 text-center font-semibold">الحالة</th>
+          <th class="px-4 py-3 text-center font-semibold hidden md:table-cell">آخر تحديث</th>
+          <th class="px-4 py-3 text-center font-semibold">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/[0.04]">
+        {% for it in items %}
+        <tr class="hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3">
+            <div class="font-medium text-white">{{ it.title }}</div>
+          </td>
+          <td class="px-4 py-3 text-neutral-500 text-xs hidden md:table-cell line-clamp-1">{{ it.content[:90] }}</td>
+          <td class="px-4 py-3 text-center">
+            <form method="post" action="/admin/knowledge/{{ it.id }}/toggle">
+              {% if it.is_active %}
+              <button class="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20">مُفعّل</button>
+              {% else %}
+              <button class="inline-flex px-2 py-0.5 rounded-full bg-neutral-700 text-neutral-400 text-xs font-medium hover:bg-neutral-600">معطّل</button>
+              {% endif %}
+            </form>
+          </td>
+          <td class="px-4 py-3 text-center text-neutral-500 text-xs hidden md:table-cell">{{ it.updated_at | fmtdate }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-3">
+              <a href="/admin/knowledge/{{ it.id }}/edit" class="text-gold-400 hover:text-gold-300 text-xs font-medium hover:underline">تعديل</a>
+              <form method="post" action="/admin/knowledge/{{ it.id }}/delete"
+                    onsubmit="return confirm('حذف هذه المعرفة نهائياً؟')">
+                <button class="text-red-400 hover:text-red-300 text-xs font-medium">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="px-4 py-14 text-center">
+          <p class="text-neutral-500 mb-3">لا توجد معرفة مضافة بعد</p>
+          <a href="/admin/knowledge/new" class="text-gold-400 hover:underline text-sm">أضف أول معرفة ←</a>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if items %}<div class="px-4 py-3 border-t border-white/[0.04] text-xs text-neutral-600">{{ items | length }} عنصر معرفة</div>{% endif %}
+</div>
+{% endblock %}
