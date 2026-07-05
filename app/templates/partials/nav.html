@@ -1,26 +1,31 @@
-<header class="sticky top-0 z-40 backdrop-blur bg-ink-900/80 border-b border-white/5">
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
   <nav class="container mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
     <a href="/" class="flex items-center gap-2 group">
-      <span class="size-9 rounded-xl bg-gradient-to-br from-gold-500 to-gold-300 grid place-items-center font-display font-bold text-ink-900">{{ content.nav_logo or 'G' }}</span>
-      <span class="font-display font-bold text-lg group-hover:text-gold-400 transition">{{ site.name }}</span>
+      <span class="size-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-400 grid place-items-center font-display font-bold text-white text-sm">{{ content.nav_logo or 'J' }}</span>
+      <span class="font-display font-bold text-lg text-slate-900 group-hover:text-brand-500 transition-colors">{{ site.name }}</span>
     </a>
-    <ul class="hidden md:flex items-center gap-7 text-sm">
-      <li><a href="/" class="hover:text-gold-400">الرئيسية</a></li>
-      <li><a href="/about" class="hover:text-gold-400">من أنا</a></li>
-      <li><a href="/projects" class="hover:text-gold-400">المشاريع</a></li>
-      <li><a href="/services" class="hover:text-gold-400">الخدمات</a></li>
-      <li><a href="/products" class="hover:text-gold-400">المنتجات</a></li>
-      <li><a href="/blog" class="hover:text-gold-400">المدونة</a></li>
-      <li><a href="/contact" class="px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-semibold hover:bg-gold-400">تواصل</a></li>
+    <ul class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+      <li><a href="/" class="hover:text-brand-500 transition-colors">الرئيسية</a></li>
+      <li><a href="/about" class="hover:text-brand-500 transition-colors">من أنا</a></li>
+      <li><a href="/projects" class="hover:text-brand-500 transition-colors">المشاريع</a></li>
+      <li><a href="/services" class="hover:text-brand-500 transition-colors">الخدمات</a></li>
+      <li><a href="/products" class="hover:text-brand-500 transition-colors">المنتجات</a></li>
+      <li><a href="/blog" class="hover:text-brand-500 transition-colors">المدونة</a></li>
+      <li><a href="/contact" class="px-4 py-2 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors shadow-sm">احجز استشارة</a></li>
     </ul>
-    <button @click="menu=!menu" class="md:hidden p-2 rounded-lg border border-white/10">☰</button>
+    <button @click="menu=!menu" class="md:hidden p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+      <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
   </nav>
-  <div x-show="menu" x-transition class="md:hidden border-t border-white/5">
-    <ul class="px-4 py-3 space-y-2 text-sm">
-      <li><a href="/">الرئيسية</a></li><li><a href="/about">من أنا</a></li>
-      <li><a href="/projects">المشاريع</a></li><li><a href="/services">الخدمات</a></li>
-      <li><a href="/products">المنتجات</a></li><li><a href="/blog">المدونة</a></li>
-      <li><a href="/contact">تواصل</a></li>
+  <div x-show="menu" x-transition class="md:hidden border-t border-slate-200 bg-white">
+    <ul class="px-4 py-3 space-y-1 text-sm font-medium text-slate-700">
+      <li><a href="/" class="block py-2 hover:text-brand-500">الرئيسية</a></li>
+      <li><a href="/about" class="block py-2 hover:text-brand-500">من أنا</a></li>
+      <li><a href="/projects" class="block py-2 hover:text-brand-500">المشاريع</a></li>
+      <li><a href="/services" class="block py-2 hover:text-brand-500">الخدمات</a></li>
+      <li><a href="/products" class="block py-2 hover:text-brand-500">المنتجات</a></li>
+      <li><a href="/blog" class="block py-2 hover:text-brand-500">المدونة</a></li>
+      <li><a href="/contact" class="block py-2 text-brand-500 font-semibold">احجز استشارة</a></li>
     </ul>
   </div>
 </header>

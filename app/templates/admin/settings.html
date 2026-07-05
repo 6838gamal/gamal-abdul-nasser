@@ -97,10 +97,16 @@
           <fieldset class="border border-white/8 rounded-xl p-4 space-y-4">
             <legend class="text-xs text-neutral-400 px-2">قسم الهيرو (المقدمة)</legend>
             <div>
-              <label class="block text-xs text-neutral-400 mb-1">نص الشارة الصغيرة</label>
+              <label class="block text-xs text-neutral-400 mb-1">اسم الشارة (بادج الاسم)</label>
               <input name="hero_badge" value="{{ site_cfg.hero_badge }}"
                      class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
-                     placeholder="منصة شخصية احترافية">
+                     placeholder="جمال المقطري">
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-400 mb-1">العنوان الرئيسي (H1)</label>
+              <input name="hero_title" value="{{ site_cfg.hero_title }}"
+                     class="w-full bg-ink-800 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold-500"
+                     placeholder="أحوّل الفوضى التشغيلية إلى أنظمة ذكية تعمل بكفاءة.">
             </div>
             <div class="grid md:grid-cols-2 gap-4">
               <div>

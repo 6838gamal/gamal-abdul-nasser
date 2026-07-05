@@ -560,12 +560,14 @@ async def settings_site_save(
 async def settings_home_save(
         request: Request,
         hero_badge: str = Form(""),
+        hero_title: str = Form(""),
         hero_cta1_text: str = Form(""), hero_cta1_url: str = Form(""),
         hero_cta2_text: str = Form(""), hero_cta2_url: str = Form(""),
         cta_title: str = Form(""), cta_body: str = Form(""), cta_btn: str = Form(""),
         db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
     await save_site_settings(db, {
         "hero_badge": hero_badge.strip(),
+        "hero_title": hero_title.strip(),
         "hero_cta1_text": hero_cta1_text.strip(),
         "hero_cta1_url": hero_cta1_url.strip(),
         "hero_cta2_text": hero_cta2_text.strip(),

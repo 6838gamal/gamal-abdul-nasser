@@ -10,7 +10,7 @@ ALL_KEYS = [
     "site_name", "site_author", "site_description", "site_url", "site_locale", "default_og",
     "nav_logo",
     # الصفحة الرئيسية
-    "hero_badge", "hero_cta1_text", "hero_cta1_url", "hero_cta2_text", "hero_cta2_url",
+    "hero_badge", "hero_title", "hero_cta1_text", "hero_cta1_url", "hero_cta2_text", "hero_cta2_url",
     "cta_title", "cta_body", "cta_btn",
     # صفحة من أنا
     "about_intro",
@@ -37,14 +37,15 @@ def _defaults() -> dict:
         "default_og": env_settings.DEFAULT_OG_IMAGE,
         "nav_logo": "J",
         # الصفحة الرئيسية
-        "hero_badge": "مطوّر حلول رقمية ذكية",
-        "hero_cta1_text": "شاهد المشاريع",
-        "hero_cta1_url": "/projects",
-        "hero_cta2_text": "تواصل معي",
-        "hero_cta2_url": "/contact",
-        "cta_title": "لديك مشروع أو فكرة تشغيلية؟",
-        "cta_body": "حوّلها إلى نظام عملي يوفر الوقت ويزيد الإنتاجية.",
-        "cta_btn": "ابدأ الآن",
+        "hero_badge": "جمال المقطري",
+        "hero_title": "أحوّل الفوضى التشغيلية إلى أنظمة ذكية تعمل بكفاءة.",
+        "hero_cta1_text": "احجز استشارة",
+        "hero_cta1_url": "/contact",
+        "hero_cta2_text": "شاهد المشاريع",
+        "hero_cta2_url": "/projects",
+        "cta_title": "لديك فوضى تشغيلية تريد حلها؟",
+        "cta_body": "احجز استشارة مجانية ونبدأ بتحليل مشكلتك وتصميم الحل المناسب.",
+        "cta_btn": "احجز استشارة مجانية",
         # صفحة من أنا
         "about_intro": (
             "مرحباً، أنا جمال المقطري، مطور تطبيقات وحلول رقمية متخصص في بناء الأنظمة الذكية "
@@ -165,8 +166,9 @@ def _apply_to_templates():
     templates.env.globals["content"] = {
         "nav_logo": c.get("nav_logo", "G"),
         # الصفحة الرئيسية
-        "hero_badge": c.get("hero_badge", "منصة شخصية احترافية"),
-        "hero_cta1_text": c.get("hero_cta1_text", "شاهد المشاريع"),
+        "hero_badge": c.get("hero_badge", ""),
+        "hero_title": c.get("hero_title", "أحوّل الفوضى التشغيلية إلى أنظمة ذكية تعمل بكفاءة."),
+        "hero_cta1_text": c.get("hero_cta1_text", "احجز استشارة"),
         "hero_cta1_url": c.get("hero_cta1_url", "/projects"),
         "hero_cta2_text": c.get("hero_cta2_text", "تواصل معي"),
         "hero_cta2_url": c.get("hero_cta2_url", "/contact"),

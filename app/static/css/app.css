@@ -1,6 +1,24 @@
 /* تخصيصات إضافية فوق Tailwind CDN */
-.prose-invert :where(a):not(:where([class~="not-prose"] *)){color:#e6c772}
-.prose-invert :where(h1,h2,h3,h4):not(:where([class~="not-prose"] *)){color:#f0d78c;font-family:Cairo,serif}
-.prose-invert :where(blockquote):not(:where([class~="not-prose"] *)){border-inline-start-color:#c9a84c}
-::selection{background:#c9a84c;color:#0a0a0a}
-html{scrollbar-color:#c9a84c #0a0a0a}
+.prose :where(a):not(:where([class~="not-prose"] *)){color:#00AEEF}
+.prose :where(h1,h2,h3,h4):not(:where([class~="not-prose"] *)){color:#0F172A;font-family:Cairo,serif}
+.prose :where(blockquote):not(:where([class~="not-prose"] *)){border-inline-start-color:#00AEEF}
+::selection{background:#00AEEF;color:#ffffff}
+html{scrollbar-color:#00AEEF #f1f5f9}
+
+/* Grid lines background */
+.grid-bg {
+  background-image: linear-gradient(rgba(0,174,239,0.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0,174,239,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,174,239,0.15);
+}
+
+/* Flow dots animation */
+@keyframes pulse-slow { 0%,100%{opacity:.3} 50%{opacity:.8} }
+.dot-flow { animation: pulse-slow 2s ease-in-out infinite; }

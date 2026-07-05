@@ -1,53 +1,57 @@
-<footer class="border-t border-white/5 mt-20">
-  <div class="container mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-3 gap-8 text-sm text-neutral-400">
+<footer class="bg-brand-900 text-slate-400 mt-0">
+  <div class="container mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-3 gap-8 text-sm">
     <div>
-      <h4 class="font-display text-gold-400 text-lg mb-3">{{ site.name }}</h4>
-      <p class="leading-7">{{ content.footer_tagline if content.footer_tagline else site.description }}</p>
-      {# روابط التواصل الاجتماعي #}
+      <h4 class="font-display text-brand-400 text-lg mb-3 font-bold">{{ site.name }}</h4>
+      <p class="leading-7 text-slate-400">{{ content.footer_tagline if content.footer_tagline else site.description }}</p>
       <div class="flex flex-wrap gap-2 mt-4">
         {% if content.social_email %}
-        <a href="{{ content.social_email }}" title="البريد" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">📧</a>
+        <a href="{{ content.social_email }}" title="البريد"
+           class="size-8 rounded-lg bg-white/5 hover:bg-brand-500/30 hover:text-brand-400 grid place-items-center transition text-base">📧</a>
         {% endif %}
         {% if content.social_whatsapp %}
-        <a href="{{ content.social_whatsapp }}" target="_blank" rel="noopener" title="واتساب" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">💬</a>
+        <a href="{{ content.social_whatsapp }}" target="_blank" rel="noopener" title="واتساب"
+           class="size-8 rounded-lg bg-white/5 hover:bg-brand-500/30 hover:text-brand-400 grid place-items-center transition text-base">💬</a>
         {% endif %}
         {% if content.social_twitter %}
-        <a href="{{ content.social_twitter }}" target="_blank" rel="noopener" title="تويتر" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">🐦</a>
+        <a href="{{ content.social_twitter }}" target="_blank" rel="noopener" title="تويتر"
+           class="size-8 rounded-lg bg-white/5 hover:bg-brand-500/30 hover:text-brand-400 grid place-items-center transition text-base">🐦</a>
         {% endif %}
         {% if content.social_linkedin %}
-        <a href="{{ content.social_linkedin }}" target="_blank" rel="noopener" title="لينكدإن" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">💼</a>
+        <a href="{{ content.social_linkedin }}" target="_blank" rel="noopener" title="لينكدإن"
+           class="size-8 rounded-lg bg-white/5 hover:bg-brand-500/30 hover:text-brand-400 grid place-items-center transition text-base">💼</a>
         {% endif %}
         {% if content.social_github %}
-        <a href="{{ content.social_github }}" target="_blank" rel="noopener" title="GitHub" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">🐙</a>
+        <a href="{{ content.social_github }}" target="_blank" rel="noopener" title="GitHub"
+           class="size-8 rounded-lg bg-white/5 hover:bg-brand-500/30 hover:text-brand-400 grid place-items-center transition text-base">🐙</a>
         {% endif %}
         {% if content.social_youtube %}
-        <a href="{{ content.social_youtube }}" target="_blank" rel="noopener" title="يوتيوب" class="size-8 rounded-lg bg-white/5 hover:bg-gold-500/20 hover:text-gold-400 grid place-items-center transition text-base">▶️</a>
+        <a href="{{ content.social_youtube }}" target="_blank" rel="noopener" title="يوتيوب"
+           class="size-8 rounded-lg bg-white/5 hover:bg-brand-500/30 hover:text-brand-400 grid place-items-center transition text-base">▶️</a>
         {% endif %}
       </div>
     </div>
     <div>
-      <h4 class="font-display text-white mb-3">روابط</h4>
+      <h4 class="font-display text-white mb-3 font-semibold">روابط</h4>
       <ul class="space-y-2">
-        <li><a href="/about" class="hover:text-gold-400">من أنا</a></li>
-        <li><a href="/projects" class="hover:text-gold-400">المشاريع</a></li>
-        <li><a href="/services" class="hover:text-gold-400">الخدمات</a></li>
-        <li><a href="/blog" class="hover:text-gold-400">المدونة</a></li>
+        <li><a href="/about" class="hover:text-brand-400 transition-colors">من أنا</a></li>
+        <li><a href="/projects" class="hover:text-brand-400 transition-colors">المشاريع</a></li>
+        <li><a href="/services" class="hover:text-brand-400 transition-colors">الخدمات</a></li>
+        <li><a href="/blog" class="hover:text-brand-400 transition-colors">المدونة</a></li>
+        <li><a href="/contact" class="hover:text-brand-400 transition-colors">التواصل</a></li>
       </ul>
     </div>
     <div>
-      <h4 class="font-display text-white mb-3">أخرى</h4>
+      <h4 class="font-display text-white mb-3 font-semibold">أخرى</h4>
       <ul class="space-y-2">
-        <li><a href="/rss.xml" class="hover:text-gold-400">RSS Feed</a></li>
-        <li><a href="/sitemap.xml" class="hover:text-gold-400">Sitemap</a></li>
-        <li><a href="/contact" class="hover:text-gold-400">تواصل</a></li>
+        <li><a href="/rss.xml" class="hover:text-brand-400 transition-colors">RSS Feed</a></li>
+        <li><a href="/sitemap.xml" class="hover:text-brand-400 transition-colors">Sitemap</a></li>
+        <li><a href="/contact" class="hover:text-brand-400 transition-colors">احجز استشارة</a></li>
       </ul>
     </div>
   </div>
-  <div class="border-t border-white/5 py-5 text-center text-xs text-neutral-500">
+  <div class="border-t border-white/10 py-5 text-center text-xs text-slate-500">
     © {{ site.year }} {{ site.author }} —
-    <span id="admin-trigger"
-          class="cursor-default select-none"
-          title="">جميع الحقوق محفوظة</span>
+    <span id="admin-trigger" class="cursor-default select-none">جميع الحقوق محفوظة</span>
   </div>
 </footer>
 
@@ -55,27 +59,23 @@
 <div id="admin-modal"
      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm"
      onclick="if(event.target===this)closeAdminModal()">
-  <div class="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm shadow-2xl relative">
+  <div class="bg-brand-900 border border-white/10 rounded-2xl p-8 w-full max-w-sm shadow-2xl relative">
     <button onclick="closeAdminModal()"
-            class="absolute top-4 left-4 text-neutral-500 hover:text-white text-lg leading-none">✕</button>
+            class="absolute top-4 left-4 text-slate-500 hover:text-white text-lg leading-none">✕</button>
     <div class="flex justify-center mb-6">
-      <span class="size-12 rounded-xl bg-[#c9a84c] grid place-items-center text-[#0a0a0a] font-bold text-xl font-display">{{ content.nav_logo or 'G' }}</span>
+      <span class="size-12 rounded-xl bg-brand-500 grid place-items-center text-white font-bold text-xl font-display">{{ content.nav_logo or 'J' }}</span>
     </div>
     <h2 class="text-center font-display text-white text-lg mb-6">دخول الإدارة</h2>
     <form id="admin-login-form" onsubmit="submitAdminLogin(event)" class="space-y-4" novalidate>
-      <div>
-        <input id="al-email" type="email" name="email" placeholder="البريد الإلكتروني"
-               autocomplete="username" dir="ltr"
-               class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#c9a84c] transition">
-      </div>
-      <div>
-        <input id="al-pass" type="password" name="password" placeholder="كلمة المرور"
-               autocomplete="current-password" dir="ltr"
-               class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#c9a84c] transition">
-      </div>
+      <input id="al-email" type="email" name="email" placeholder="البريد الإلكتروني"
+             autocomplete="username" dir="ltr"
+             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-400 transition">
+      <input id="al-pass" type="password" name="password" placeholder="كلمة المرور"
+             autocomplete="current-password" dir="ltr"
+             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-400 transition">
       <p id="al-error" class="text-red-400 text-xs text-center hidden"></p>
       <button type="submit" id="al-btn"
-              class="w-full bg-[#c9a84c] hover:bg-[#e6c772] text-[#0a0a0a] font-bold rounded-lg py-2.5 text-sm transition">
+              class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-lg py-2.5 text-sm transition">
         دخول
       </button>
     </form>
@@ -92,59 +92,34 @@
     lastClick = now;
   });
 })();
-
 function openAdminModal() {
   var m = document.getElementById('admin-modal');
-  m.classList.remove('hidden');
-  m.classList.add('flex');
+  m.classList.remove('hidden'); m.classList.add('flex');
   document.getElementById('al-email').focus();
   document.getElementById('al-error').classList.add('hidden');
   document.getElementById('al-email').value = '';
   document.getElementById('al-pass').value = '';
 }
-
 function closeAdminModal() {
   var m = document.getElementById('admin-modal');
-  m.classList.add('hidden');
-  m.classList.remove('flex');
+  m.classList.add('hidden'); m.classList.remove('flex');
 }
-
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeAdminModal();
-});
-
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAdminModal(); });
 async function submitAdminLogin(e) {
   e.preventDefault();
   var btn = document.getElementById('al-btn');
   var err = document.getElementById('al-error');
   var email = document.getElementById('al-email').value.trim();
   var pass = document.getElementById('al-pass').value;
-  btn.textContent = '...';
-  btn.disabled = true;
+  btn.textContent = '...'; btn.disabled = true;
   err.classList.add('hidden');
   var body = new URLSearchParams();
-  body.append('email', email);
-  body.append('password', pass);
+  body.append('email', email); body.append('password', pass);
   try {
-    var res = await fetch('/api/quick-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    });
+    var res = await fetch('/api/quick-login', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString() });
     var data = await res.json();
-    if (data.ok) {
-      window.location.href = '/admin';
-    } else {
-      err.textContent = data.error || 'بيانات غير صحيحة';
-      err.classList.remove('hidden');
-      btn.textContent = 'دخول';
-      btn.disabled = false;
-    }
-  } catch (ex) {
-    err.textContent = 'حدث خطأ، حاول مجدداً';
-    err.classList.remove('hidden');
-    btn.textContent = 'دخول';
-    btn.disabled = false;
-  }
+    if (data.ok) { window.location.href = '/admin'; }
+    else { err.textContent = data.error || 'بيانات غير صحيحة'; err.classList.remove('hidden'); btn.textContent = 'دخول'; btn.disabled = false; }
+  } catch (ex) { err.textContent = 'حدث خطأ، حاول مجدداً'; err.classList.remove('hidden'); btn.textContent = 'دخول'; btn.disabled = false; }
 }
 </script>

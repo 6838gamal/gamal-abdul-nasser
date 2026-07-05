@@ -1,94 +1,288 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="relative overflow-hidden">
-  <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(201,168,76,0.15),transparent_60%)]"></div>
-  <div class="container mx-auto max-w-6xl px-4 py-24 text-center">
-    <p class="inline-block px-3 py-1 rounded-full text-xs border border-gold-500/40 text-gold-300 mb-6">{{ content.hero_badge }}</p>
-    <h1 class="font-display text-4xl md:text-6xl font-black leading-tight">
-      <span class="bg-gradient-to-l from-gold-300 via-gold-400 to-gold-500 bg-clip-text text-transparent">{{ site.author }}</span>
+
+{# ── HERO ── #}
+<section class="relative overflow-hidden bg-white">
+  <div class="absolute inset-0 -z-10 grid-bg"></div>
+  {# Decorative circles #}
+  <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-400/10 blur-3xl -z-10"></div>
+  <div class="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-brand-500/8 blur-2xl -z-10"></div>
+
+  <div class="container mx-auto max-w-5xl px-4 py-28 text-center">
+    {# Name badge #}
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-sm font-medium mb-8">
+      <span class="size-2 rounded-full bg-brand-400 dot-flow"></span>
+      {{ content.hero_badge }}
+    </div>
+
+    {# Main tagline #}
+    <h1 class="font-display text-4xl md:text-6xl font-black leading-tight text-slate-900">
+      {% set title = content.hero_title or 'أحوّل الفوضى التشغيلية إلى أنظمة ذكية تعمل بكفاءة.' %}
+      {% set parts = title.split('ذكية') %}
+      {% if parts|length > 1 %}
+        {{ parts[0] }}<span class="text-brand-500">ذكية</span>{{ parts[1] }}
+      {% else %}
+        <span class="text-brand-500">{{ title }}</span>
+      {% endif %}
     </h1>
-    <p class="mt-6 max-w-2xl mx-auto text-lg text-neutral-300 leading-8">{{ site.description }}</p>
-    <div class="mt-8 flex items-center justify-center gap-3 flex-wrap">
-      <a href="{{ content.hero_cta1_url }}" class="px-6 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold hover:bg-gold-400 shadow-glow">{{ content.hero_cta1_text }}</a>
-      <a href="{{ content.hero_cta2_url }}" class="px-6 py-3 rounded-lg border border-white/15 hover:border-gold-400">{{ content.hero_cta2_text }}</a>
+
+    {# Subtitle #}
+    <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-500 leading-8">{{ site.description }}</p>
+
+    {# CTA buttons #}
+    <div class="mt-10 flex items-center justify-center gap-4 flex-wrap">
+      <a href="{{ content.hero_cta1_url }}"
+         class="px-7 py-3.5 rounded-xl bg-brand-500 text-white font-bold hover:bg-brand-600 transition-colors shadow-glow text-base">
+        {{ content.hero_cta1_text }}
+      </a>
+      <a href="{{ content.hero_cta2_url }}"
+         class="px-7 py-3.5 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:border-brand-400 hover:text-brand-600 transition-colors text-base">
+        {{ content.hero_cta2_text }}
+      </a>
+    </div>
+
+    {# Stats strip #}
+    <div class="mt-16 grid grid-cols-3 gap-4 max-w-lg mx-auto">
+      <div class="text-center">
+        <p class="font-display text-3xl font-black text-brand-500">+20</p>
+        <p class="text-xs text-slate-500 mt-1">مشروع منجز</p>
+      </div>
+      <div class="text-center border-x border-slate-200">
+        <p class="font-display text-3xl font-black text-brand-500">80%</p>
+        <p class="text-xs text-slate-500 mt-1">توفير في الوقت</p>
+      </div>
+      <div class="text-center">
+        <p class="font-display text-3xl font-black text-brand-500">100%</p>
+        <p class="text-xs text-slate-500 mt-1">مخصص لك</p>
+      </div>
     </div>
   </div>
 </section>
 
+{# ── SERVICES ── #}
 {% if services %}
-<section class="container mx-auto max-w-7xl px-4 py-16">
-  <div class="flex items-end justify-between mb-8">
-    <h2 class="font-display text-2xl md:text-3xl">الخدمات</h2>
-    <a href="/services" class="text-sm text-gold-400 hover:underline">عرض الكل ←</a>
-  </div>
-  <div class="grid md:grid-cols-3 gap-5">
-    {% for s in services %}
-    <a href="/services/{{ s.slug }}" class="group p-6 rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/40 transition">
-      <div class="size-12 rounded-xl bg-gold-500/10 text-gold-400 grid place-items-center mb-4">★</div>
-      <h3 class="font-display text-lg mb-2 group-hover:text-gold-400">{{ s.title }}</h3>
-      <p class="text-sm text-neutral-400 leading-7">{{ s.short_description }}</p>
-    </a>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
-{% if featured_projects %}
-<section class="container mx-auto max-w-7xl px-4 py-16">
-  <div class="flex items-end justify-between mb-8">
-    <h2 class="font-display text-2xl md:text-3xl">المشاريع المميزة</h2>
-    <a href="/projects" class="text-sm text-gold-400 hover:underline">الكل ←</a>
-  </div>
-  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-    {% for p in featured_projects %}
-    <a href="/projects/{{ p.slug }}" class="rounded-2xl overflow-hidden bg-ink-700 border border-white/5 hover:border-gold-500/40 transition group">
-      {% if p.cover_image %}<img src="{{ p.cover_image }}" alt="{{ p.title }}" loading="lazy" class="aspect-video object-cover w-full">{% endif %}
-      <div class="p-5">
-        <h3 class="font-display text-lg group-hover:text-gold-400">{{ p.title }}</h3>
-        <p class="text-sm text-neutral-400 mt-2 line-clamp-2">{{ p.short_description }}</p>
+<section class="bg-slate-50 py-20">
+  <div class="container mx-auto max-w-7xl px-4">
+    <div class="flex items-end justify-between mb-10">
+      <div>
+        <p class="text-brand-500 text-sm font-semibold mb-1">ماذا أقدم</p>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">الخدمات</h2>
       </div>
-    </a>
-    {% endfor %}
+      <a href="/services" class="text-sm text-brand-500 font-medium hover:underline">عرض الكل ←</a>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5">
+      {% for s in services %}
+      <a href="/services/{{ s.slug }}"
+         class="group p-6 rounded-2xl bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card transition-all">
+        <div class="size-12 rounded-xl bg-brand-50 text-brand-500 grid place-items-center mb-4">
+          <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-lg font-bold text-slate-900 mb-2 group-hover:text-brand-500 transition-colors">{{ s.title }}</h3>
+        <p class="text-sm text-slate-500 leading-7">{{ s.short_description }}</p>
+      </a>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
 
+{# ── FEATURED PROJECTS ── #}
+{% if featured_projects %}
+<section class="py-20">
+  <div class="container mx-auto max-w-7xl px-4">
+    <div class="flex items-end justify-between mb-10">
+      <div>
+        <p class="text-brand-500 text-sm font-semibold mb-1">دراسات حالة</p>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">المشاريع المميزة</h2>
+      </div>
+      <a href="/projects" class="text-sm text-brand-500 font-medium hover:underline">الكل ←</a>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for p in featured_projects %}
+      <a href="/projects/{{ p.slug }}"
+         class="rounded-2xl overflow-hidden bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card transition-all group">
+        {% if p.cover_image %}
+        <img src="{{ p.cover_image }}" alt="{{ p.title }}" loading="lazy"
+             class="aspect-video object-cover w-full">
+        {% else %}
+        <div class="aspect-video bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
+          <svg class="size-10 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
+          </svg>
+        </div>
+        {% endif %}
+        <div class="p-5">
+          <h3 class="font-display font-bold text-slate-900 group-hover:text-brand-500 transition-colors">{{ p.title }}</h3>
+          <p class="text-sm text-slate-500 mt-2 line-clamp-2">{{ p.short_description }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ── WHY ME ── #}
+<section class="bg-brand-900 py-20">
+  <div class="container mx-auto max-w-5xl px-4">
+    <div class="text-center mb-12">
+      <p class="text-brand-400 text-sm font-semibold mb-2">لماذا أنا؟</p>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-white">أعمل بطريقة مختلفة</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      {% set reasons = [
+        ('🎯', 'التركيز على حل المشكلة', 'أبدأ بفهم مشكلتك التشغيلية، وليس بكتابة الكود مباشرة.'),
+        ('🧠', 'خبرة في الأتمتة والذكاء الاصطناعي', 'أدمج تقنيات الذكاء الاصطناعي في الحلول لزيادة الكفاءة.'),
+        ('🏗️', 'فهم احتياجات الأعمال', 'أفكر كصاحب عمل، وليس فقط كمطور تقني.'),
+        ('📈', 'حلول قابلة للتوسع', 'أبني أنظمة تنمو مع أعمالك دون إعادة بناء من الصفر.'),
+        ('💡', 'رؤية استشارية', 'أقدم توصيات استراتيجية بالإضافة إلى التنفيذ التقني.'),
+        ('🔧', 'دعم فني مستمر', 'لا ينتهي دوري عند التسليم — أبقى معك للتطوير والدعم.'),
+      ] %}
+      {% for icon, title, desc in reasons %}
+      <div class="flex gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-400/40 transition-colors">
+        <span class="text-2xl shrink-0 mt-0.5">{{ icon }}</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">{{ title }}</h3>
+          <p class="text-sm text-slate-400 leading-6">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ── HOW WE WORK ── #}
+<section class="py-20 bg-slate-50">
+  <div class="container mx-auto max-w-5xl px-4">
+    <div class="text-center mb-12">
+      <p class="text-brand-500 text-sm font-semibold mb-2">منهجية العمل</p>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">خطوات التعاون</h2>
+    </div>
+    <div class="relative">
+      <div class="absolute top-6 right-6 left-6 h-0.5 bg-brand-100 hidden md:block"></div>
+      <div class="grid md:grid-cols-6 gap-4 relative">
+        {% set steps = [
+          ('فهم المشكلة', 'نستمع لتحدياتك التشغيلية بعمق.'),
+          ('تحليل العمليات', 'نرسم خريطة العمليات الحالية وتحديد الثغرات.'),
+          ('تصميم الحل', 'نبني نموذج الحل ونتفق على التفاصيل.'),
+          ('التطوير', 'نبني النظام بمراحل مع تحديثات منتظمة.'),
+          ('الاختبار', 'نتأكد من جودة كل شيء قبل التسليم.'),
+          ('الدعم', 'نتابعك بعد التسليم ونطور النظام معك.'),
+        ] %}
+        {% for title, desc in steps %}
+        <div class="text-center">
+          <div class="size-12 rounded-full bg-brand-500 text-white font-display font-bold text-lg grid place-items-center mx-auto mb-3 relative z-10">{{ loop.index }}</div>
+          <h3 class="font-semibold text-slate-900 text-sm mb-1">{{ title }}</h3>
+          <p class="text-xs text-slate-500 leading-5">{{ desc }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ── LATEST ARTICLES ── #}
 {% if latest_articles %}
-<section class="container mx-auto max-w-7xl px-4 py-16">
-  <div class="flex items-end justify-between mb-8">
-    <h2 class="font-display text-2xl md:text-3xl">أحدث المقالات</h2>
-    <a href="/blog" class="text-sm text-gold-400 hover:underline">المدونة ←</a>
-  </div>
-  <div class="grid md:grid-cols-2 gap-5">
-    {% for a in latest_articles %}
-    <a href="/blog/{{ a.slug }}" class="p-6 rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/40 transition group">
-      <h3 class="font-display text-lg group-hover:text-gold-400">{{ a.title }}</h3>
-      <p class="text-sm text-neutral-400 mt-2">{{ a.excerpt }}</p>
-      <p class="text-xs text-neutral-500 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د قراءة</p>
-    </a>
-    {% endfor %}
+<section class="py-20">
+  <div class="container mx-auto max-w-7xl px-4">
+    <div class="flex items-end justify-between mb-10">
+      <div>
+        <p class="text-brand-500 text-sm font-semibold mb-1">المدونة</p>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">أحدث المقالات</h2>
+      </div>
+      <a href="/blog" class="text-sm text-brand-500 font-medium hover:underline">المدونة ←</a>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5">
+      {% for a in latest_articles %}
+      <a href="/blog/{{ a.slug }}"
+         class="p-6 rounded-2xl bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card transition-all group">
+        <h3 class="font-display font-bold text-slate-900 group-hover:text-brand-500 transition-colors">{{ a.title }}</h3>
+        <p class="text-sm text-slate-500 mt-2 leading-6">{{ a.excerpt }}</p>
+        <p class="text-xs text-slate-400 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د قراءة</p>
+      </a>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
 
+{# ── FAQ ── #}
+<section class="bg-slate-50 py-20">
+  <div class="container mx-auto max-w-3xl px-4">
+    <div class="text-center mb-12">
+      <p class="text-brand-500 text-sm font-semibold mb-2">أسئلة شائعة</p>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">FAQ</h2>
+    </div>
+    <div class="space-y-3" x-data="{open:null}">
+      {% set faqs = [
+        ('ما نوع العملاء الذين تعمل معهم؟', 'أعمل مع الشركات الناشئة والمؤسسات ورواد الأعمال الذين يرغبون في تحسين عملياتهم باستخدام التقنية.'),
+        ('هل تطور أنظمة مخصصة بالكامل؟', 'نعم، يتم تصميم الحل وفق احتياجات العميل وليس باستخدام قوالب جاهزة فقط.'),
+        ('هل يمكن دمج الذكاء الاصطناعي مع الأنظمة الحالية؟', 'نعم، يمكن دمج تقنيات الذكاء الاصطناعي مع الأنظمة الموجودة لتحسين الأداء والأتمتة.'),
+        ('هل تقدم دعماً بعد التسليم؟', 'نعم، أقدم خدمات الدعم والتطوير المستمر حسب الاتفاق.'),
+        ('هل يمكن تطوير تطبيق ويب وجوال معاً؟', 'نعم، يمكن بناء منظومة متكاملة تشمل الويب والجوال ولوحات التحكم.'),
+        ('كم تستغرق المشاريع عادة؟', 'يعتمد ذلك على حجم المشروع وتعقيده، ويتم تحديد الجدول الزمني بعد دراسة المتطلبات.'),
+        ('هل تعمل عن بُعد؟', 'نعم، يمكن تنفيذ المشاريع والتواصل بالكامل عن بُعد.'),
+        ('هل يمكن البدء بفكرة فقط؟', 'نعم، أساعد في تحويل الفكرة إلى متطلبات واضحة وخطة تنفيذ عملية.'),
+      ] %}
+      {% for q, a in faqs %}
+      {% set idx = loop.index %}
+      <div class="rounded-xl bg-white border border-slate-200 overflow-hidden">
+        <button class="w-full flex items-center justify-between px-5 py-4 text-right font-semibold text-slate-800 hover:text-brand-500 transition-colors"
+                @click="open = (open === {{ idx }}) ? null : {{ idx }}">
+          <span>{{ q }}</span>
+          <svg class="size-5 text-slate-400 shrink-0 transition-transform duration-200 me-2"
+               :class="open === {{ idx }} ? 'rotate-180 text-brand-500' : ''"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div x-show="open === {{ idx }}" x-transition class="px-5 pb-4 text-sm text-slate-500 leading-7 border-t border-slate-100">
+          {{ a }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ── DIGITAL PRODUCTS ── #}
 {% if products %}
-<section class="container mx-auto max-w-7xl px-4 py-16">
-  <h2 class="font-display text-2xl md:text-3xl mb-8">منتجات رقمية</h2>
-  <div class="grid md:grid-cols-4 gap-5">
-    {% for p in products %}
-    <a href="/products/{{ p.slug }}" class="rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/40 p-5 transition group">
-      <h3 class="font-display group-hover:text-gold-400">{{ p.title }}</h3>
-      <p class="text-sm text-neutral-400 mt-2">{{ p.short_description }}</p>
-      <p class="mt-3 text-gold-400 font-bold">{{ p.price }} {{ p.currency }}</p>
-    </a>
-    {% endfor %}
+<section class="py-20">
+  <div class="container mx-auto max-w-7xl px-4">
+    <div class="mb-10">
+      <p class="text-brand-500 text-sm font-semibold mb-1">متجر رقمي</p>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">منتجات رقمية</h2>
+    </div>
+    <div class="grid md:grid-cols-4 gap-5">
+      {% for p in products %}
+      <a href="/products/{{ p.slug }}"
+         class="rounded-2xl bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card p-5 transition-all group">
+        <h3 class="font-display font-bold text-slate-900 group-hover:text-brand-500 transition-colors">{{ p.title }}</h3>
+        <p class="text-sm text-slate-500 mt-2 leading-6">{{ p.short_description }}</p>
+        <p class="mt-3 text-brand-500 font-bold">{{ p.price }} {{ p.currency }}</p>
+      </a>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
 
-<section class="container mx-auto max-w-5xl px-4 py-20 text-center">
-  <h2 class="font-display text-3xl md:text-4xl mb-4">{{ content.cta_title }}</h2>
-  <p class="text-neutral-400 mb-8">{{ content.cta_body }}</p>
-  <a href="/contact" class="px-7 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold hover:bg-gold-400 shadow-glow">{{ content.cta_btn }}</a>
+{# ── CTA BANNER ── #}
+<section class="py-20 bg-gradient-to-l from-brand-600 to-brand-500 relative overflow-hidden">
+  <div class="absolute inset-0 grid-bg opacity-20"></div>
+  <div class="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-white/5 blur-2xl"></div>
+  <div class="container mx-auto max-w-4xl px-4 text-center relative">
+    <h2 class="font-display text-3xl md:text-4xl font-black text-white mb-4">{{ content.cta_title }}</h2>
+    <p class="text-brand-100 mb-8 text-lg">{{ content.cta_body }}</p>
+    <a href="/contact"
+       class="inline-block px-8 py-4 rounded-xl bg-white text-brand-600 font-bold hover:bg-brand-50 transition-colors shadow-lg text-base">
+      {{ content.cta_btn }}
+    </a>
+  </div>
 </section>
+
 {% endblock %}

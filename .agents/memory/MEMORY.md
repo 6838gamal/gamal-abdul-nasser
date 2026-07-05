@@ -1,0 +1,3 @@
+- [Env vars override pydantic defaults](env-vars-override.md) — Replit env vars (setEnvVars) override pydantic-settings class defaults; change both the class AND the env var.
+- [Site settings startup sync](site-settings-startup.md) — UPSERT seo_settings at lifespan startup; call load_site_settings AFTER the UPSERT or it overwrites cache with stale DB values.
+- [Jinja2 has no enumerate filter](jinja2-quirks.md) — use loop.index / loop.index0 instead of | enumerate which causes a 500 error.
