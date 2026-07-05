@@ -62,8 +62,24 @@ async def lifespan(app: FastAPI):
                         bio="مؤسس المنصة"))
             await db.commit()
             log.info("✓ تم إنشاء حساب المدير الافتراضي: %s", settings.ADMIN_EMAIL)
-        # تحميل إعدادات الموقع من قاعدة البيانات وتطبيقها على القوالب
+        elif existing.full_name != settings.SITE_AUTHOR:
+            existing.full_name = settings.SITE_AUTHOR
+            await db.commit()
+            log.info("✓ تم تحديث اسم المدير إلى: %s", settings.SITE_AUTHOR)
         from app.utils.site_settings import load_site_settings, _apply_to_templates
+        from sqlalchemy import text
+        # مزامنة الاسم والوصف مباشرةً عبر UPSERT (يضمن تحديث القيم القديمة في DB)
+        await db.execute(text("""
+            INSERT INTO seo_settings (key, value)
+            VALUES (:k1, :n1), (:k2, :n2), (:k3, :n3)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+        """), {
+            "k1": "site_name",  "n1": settings.APP_NAME,
+            "k2": "site_author", "n2": settings.SITE_AUTHOR,
+            "k3": "site_description", "n3": settings.SITE_DESCRIPTION,
+        })
+        await db.commit()
+        # تحميل جميع الإعدادات (ستظهر القيم المحدَّثة الآن)
         await load_site_settings(db)
         _apply_to_templates()
     yield

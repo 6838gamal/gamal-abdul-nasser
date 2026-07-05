@@ -59,7 +59,7 @@ def _to_psycopg2_url(url: str) -> str:
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "منصة جمال عبد الناصر"
+    APP_NAME: str = "منصة جمال المقطري"
     APP_URL: str = "http://localhost:5000"
     SECRET_KEY: str = "dev-secret-change-me"
     ENVIRONMENT: str = "development"
@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
 
-    SITE_AUTHOR: str = "جمال عبد الناصر"
+    SITE_AUTHOR: str = "جمال المقطري"
     SITE_DESCRIPTION: str = "منصة شخصية احترافية"
     SITE_LOCALE: str = "ar_SA"
     DEFAULT_OG_IMAGE: str = "/static/images/og-default.jpg"
