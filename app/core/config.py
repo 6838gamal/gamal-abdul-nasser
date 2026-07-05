@@ -82,6 +82,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
 
+    GEMINI_API_KEY: str = ""
+
     SITE_AUTHOR: str = "جمال المقطري"
     SITE_DESCRIPTION: str = "منصة شخصية احترافية"
     SITE_LOCALE: str = "ar_SA"

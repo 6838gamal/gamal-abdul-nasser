@@ -19,7 +19,7 @@ from app.database.session import engine, Base, AsyncSessionLocal
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.analytics import AnalyticsMiddleware
 from app.middleware.redirects import RedirectMiddleware
-from app.routes import public, seo_routes, auth_routes, downloads
+from app.routes import public, seo_routes, auth_routes, downloads, chat as chat_route
 from app.admin.router import router as admin_router
 from app.utils.templates import templates
 from app.models.user import User
@@ -124,6 +124,7 @@ app.include_router(public.router)
 app.include_router(seo_routes.router)
 app.include_router(auth_routes.router)
 app.include_router(downloads.router)
+app.include_router(chat_route.router)
 app.include_router(admin_router)
 
 
