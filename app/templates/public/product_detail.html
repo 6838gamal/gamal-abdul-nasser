@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="container mx-auto max-w-5xl px-4 py-16">
-<h1 class="font-display text-4xl mb-4 text-gold-400">{{ p.title }}</h1>
-<p class="text-lg text-neutral-300 mb-8">{{ p.short_description }}</p>
+<h1 class="font-display text-4xl mb-4 text-brand-600 dark:text-brand-400">{{ p.title }}</h1>
+<p class="text-lg text-slate-600 dark:text-slate-300 mb-8">{{ p.short_description }}</p>
 {% if p.cover_image %}<img src="{{ p.cover_image }}" class="rounded-2xl mb-8">{% endif %}
-<article class="prose prose-invert max-w-none">{{ p.description | safe }}</article>
-<div class="mt-10 p-6 rounded-2xl bg-ink-700 border border-white/5">
-<p class="text-3xl font-bold text-gold-400 mb-4">{{ p.price }} {{ p.currency }}</p>
+<article class="prose dark:prose-invert max-w-none">{{ p.description | safe }}</article>
+<div class="mt-10 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-card">
+<p class="text-3xl font-bold text-brand-600 dark:text-brand-400 mb-4">{{ p.price }} {{ p.currency }}</p>
 <form hx-post="/products/{{ p.slug }}/order" hx-target="#order-result" hx-swap="innerHTML" class="grid md:grid-cols-2 gap-3">
-<input name="name" required placeholder="اسمك" class="px-4 py-2 rounded-lg bg-ink-800 border border-white/10">
-<input name="email" type="email" required placeholder="بريدك" class="px-4 py-2 rounded-lg bg-ink-800 border border-white/10">
-<button class="md:col-span-2 px-5 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold">احصل على الرابط</button>
+<input name="name" required placeholder="اسمك" class="px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+<input name="email" type="email" required placeholder="بريدك" class="px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+<button class="md:col-span-2 px-5 py-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-bold transition-colors">احصل على الرابط</button>
 </form>
-<div id="order-result" class="mt-4 text-sm"></div>
+<div id="order-result" class="mt-4 text-sm text-slate-700 dark:text-slate-200"></div>
 </div></section>{% endblock %}

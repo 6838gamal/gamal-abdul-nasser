@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="container mx-auto max-w-5xl px-4 py-16">
-<a href="/blog" class="text-sm text-gold-400 hover:underline">← المدونة</a>
-<h1 class="font-display text-4xl mt-3 mb-4 text-gold-400">{{ a.title }}</h1>
-<p class="text-sm text-neutral-500 mb-8">{{ a.published_at | fmtdate }} • {{ a.reading_time }} دقيقة قراءة • {{ a.views }} مشاهدة</p>
+<a href="/blog" class="text-sm text-brand-600 dark:text-brand-400 hover:underline">← المدونة</a>
+<h1 class="font-display text-4xl mt-3 mb-4 text-brand-600 dark:text-brand-400">{{ a.title }}</h1>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-8">{{ a.published_at | fmtdate }} • {{ a.reading_time }} دقيقة قراءة • {{ a.views }} مشاهدة</p>
 {% if a.cover_image %}<img src="{{ a.cover_image }}" alt="{{ a.title }}" class="rounded-2xl mb-8">{% endif %}
-<article class="prose prose-invert prose-lg max-w-none">{{ a.content | safe }}</article>
-{% if a.tags %}<div class="mt-10 flex flex-wrap gap-2">{% for t in a.tags %}<span class="px-3 py-1 rounded-lg bg-gold-500/10 text-gold-300 text-sm">#{{ t.name }}</span>{% endfor %}</div>{% endif %}
-{% if related %}<div class="mt-12 pt-8 border-t border-white/5"><h3 class="font-display text-2xl mb-5">مقالات ذات صلة</h3><div class="grid md:grid-cols-3 gap-4">{% for r in related %}<a href="/blog/{{ r.slug }}" class="p-4 rounded-xl bg-ink-700 border border-white/5 hover:border-gold-500/40"><h4 class="font-display">{{ r.title }}</h4></a>{% endfor %}</div></div>{% endif %}
+<article class="prose prose-lg dark:prose-invert max-w-none">{{ a.content | safe }}</article>
+{% if a.tags %}<div class="mt-10 flex flex-wrap gap-2">{% for t in a.tags %}<span class="px-3 py-1 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-300 text-sm">#{{ t.name }}</span>{% endfor %}</div>{% endif %}
+{% if related %}<div class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800"><h3 class="font-display text-2xl mb-5 text-slate-900 dark:text-white">مقالات ذات صلة</h3><div class="grid md:grid-cols-3 gap-4">{% for r in related %}<a href="/blog/{{ r.slug }}" class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 transition-colors"><h4 class="font-display text-slate-900 dark:text-white">{{ r.title }}</h4></a>{% endfor %}</div></div>{% endif %}
 </section>{% endblock %}

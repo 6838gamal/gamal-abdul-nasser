@@ -2,7 +2,7 @@
 {% block content %}
 
 {# ── HERO ── #}
-<section class="relative overflow-hidden bg-white">
+<section class="relative overflow-hidden bg-white dark:bg-slate-950 transition-colors">
   <div class="absolute inset-0 -z-10 grid-bg"></div>
   {# Decorative circles #}
   <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-400/10 blur-3xl -z-10"></div>
@@ -10,13 +10,13 @@
 
   <div class="container mx-auto max-w-5xl px-4 py-28 text-center">
     {# Name badge #}
-    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-sm font-medium mb-8">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/30 text-brand-600 dark:text-brand-300 text-sm font-medium mb-8">
       <span class="size-2 rounded-full bg-brand-400 dot-flow"></span>
       {{ content.hero_badge }}
     </div>
 
     {# Main tagline #}
-    <h1 class="font-display text-4xl md:text-6xl font-black leading-tight text-slate-900">
+    <h1 class="font-display text-4xl md:text-6xl font-black leading-tight text-slate-900 dark:text-white">
       {% set title = content.hero_title or 'أحوّل الفوضى التشغيلية إلى أنظمة ذكية تعمل بكفاءة.' %}
       {% set parts = title.split('ذكية') %}
       {% if parts|length > 1 %}
@@ -27,7 +27,7 @@
     </h1>
 
     {# Subtitle #}
-    <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-500 leading-8">{{ site.description }}</p>
+    <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-500 dark:text-slate-400 leading-8">{{ site.description }}</p>
 
     {# CTA buttons #}
     <div class="mt-10 flex items-center justify-center gap-4 flex-wrap">
@@ -36,7 +36,7 @@
         {{ content.hero_cta1_text }}
       </a>
       <a href="{{ content.hero_cta2_url }}"
-         class="px-7 py-3.5 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:border-brand-400 hover:text-brand-600 transition-colors text-base">
+         class="px-7 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-base">
         {{ content.hero_cta2_text }}
       </a>
     </div>
@@ -47,7 +47,7 @@
         <p class="font-display text-3xl font-black text-brand-500">+20</p>
         <p class="text-xs text-slate-500 mt-1">مشروع منجز</p>
       </div>
-      <div class="text-center border-x border-slate-200">
+      <div class="text-center border-x border-slate-200 dark:border-slate-800">
         <p class="font-display text-3xl font-black text-brand-500">80%</p>
         <p class="text-xs text-slate-500 mt-1">توفير في الوقت</p>
       </div>
@@ -61,27 +61,27 @@
 
 {# ── SERVICES ── #}
 {% if services %}
-<section class="bg-slate-50 py-20">
+<section class="bg-slate-50 dark:bg-slate-900 py-20 transition-colors">
   <div class="container mx-auto max-w-7xl px-4">
     <div class="flex items-end justify-between mb-10">
       <div>
         <p class="text-brand-500 text-sm font-semibold mb-1">ماذا أقدم</p>
-        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">الخدمات</h2>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">الخدمات</h2>
       </div>
       <a href="/services" class="text-sm text-brand-500 font-medium hover:underline">عرض الكل ←</a>
     </div>
     <div class="grid md:grid-cols-3 gap-5">
       {% for s in services %}
       <a href="/services/{{ s.slug }}"
-         class="group p-6 rounded-2xl bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card transition-all">
-        <div class="size-12 rounded-xl bg-brand-50 text-brand-500 grid place-items-center mb-4">
+         class="group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:shadow-card transition-all">
+        <div class="size-12 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 grid place-items-center mb-4">
           <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M13 10V3L4 14h7v7l9-11h-7z"/>
           </svg>
         </div>
-        <h3 class="font-display text-lg font-bold text-slate-900 mb-2 group-hover:text-brand-500 transition-colors">{{ s.title }}</h3>
-        <p class="text-sm text-slate-500 leading-7">{{ s.short_description }}</p>
+        <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-brand-500 transition-colors">{{ s.title }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-7">{{ s.short_description }}</p>
       </a>
       {% endfor %}
     </div>
@@ -96,19 +96,19 @@
     <div class="flex items-end justify-between mb-10">
       <div>
         <p class="text-brand-500 text-sm font-semibold mb-1">دراسات حالة</p>
-        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">المشاريع المميزة</h2>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">المشاريع المميزة</h2>
       </div>
       <a href="/projects" class="text-sm text-brand-500 font-medium hover:underline">الكل ←</a>
     </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
       {% for p in featured_projects %}
       <a href="/projects/{{ p.slug }}"
-         class="rounded-2xl overflow-hidden bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card transition-all group">
+         class="rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:shadow-card transition-all group">
         {% if p.cover_image %}
         <img src="{{ p.cover_image }}" alt="{{ p.title }}" loading="lazy"
              class="aspect-video object-cover w-full">
         {% else %}
-        <div class="aspect-video bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
+        <div class="aspect-video bg-gradient-to-br from-brand-50 to-brand-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
           <svg class="size-10 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
@@ -116,8 +116,8 @@
         </div>
         {% endif %}
         <div class="p-5">
-          <h3 class="font-display font-bold text-slate-900 group-hover:text-brand-500 transition-colors">{{ p.title }}</h3>
-          <p class="text-sm text-slate-500 mt-2 line-clamp-2">{{ p.short_description }}</p>
+          <h3 class="font-display font-bold text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">{{ p.title }}</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">{{ p.short_description }}</p>
         </div>
       </a>
       {% endfor %}
@@ -127,7 +127,7 @@
 {% endif %}
 
 {# ── WHY ME ── #}
-<section class="bg-brand-900 py-20">
+<section class="bg-brand-900 dark:bg-black py-20 transition-colors">
   <div class="container mx-auto max-w-5xl px-4">
     <div class="text-center mb-12">
       <p class="text-brand-400 text-sm font-semibold mb-2">لماذا أنا؟</p>
@@ -156,14 +156,14 @@
 </section>
 
 {# ── HOW WE WORK ── #}
-<section class="py-20 bg-slate-50">
+<section class="py-20 bg-slate-50 dark:bg-slate-900 transition-colors">
   <div class="container mx-auto max-w-5xl px-4">
     <div class="text-center mb-12">
       <p class="text-brand-500 text-sm font-semibold mb-2">منهجية العمل</p>
-      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">خطوات التعاون</h2>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">خطوات التعاون</h2>
     </div>
     <div class="relative">
-      <div class="absolute top-6 right-6 left-6 h-0.5 bg-brand-100 hidden md:block"></div>
+      <div class="absolute top-6 right-6 left-6 h-0.5 bg-brand-100 dark:bg-slate-700 hidden md:block"></div>
       <div class="grid md:grid-cols-6 gap-4 relative">
         {% set steps = [
           ('فهم المشكلة', 'نستمع لتحدياتك التشغيلية بعمق.'),
@@ -176,8 +176,8 @@
         {% for title, desc in steps %}
         <div class="text-center">
           <div class="size-12 rounded-full bg-brand-500 text-white font-display font-bold text-lg grid place-items-center mx-auto mb-3 relative z-10">{{ loop.index }}</div>
-          <h3 class="font-semibold text-slate-900 text-sm mb-1">{{ title }}</h3>
-          <p class="text-xs text-slate-500 leading-5">{{ desc }}</p>
+          <h3 class="font-semibold text-slate-900 dark:text-white text-sm mb-1">{{ title }}</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-5">{{ desc }}</p>
         </div>
         {% endfor %}
       </div>
@@ -192,17 +192,17 @@
     <div class="flex items-end justify-between mb-10">
       <div>
         <p class="text-brand-500 text-sm font-semibold mb-1">المدونة</p>
-        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">أحدث المقالات</h2>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">أحدث المقالات</h2>
       </div>
       <a href="/blog" class="text-sm text-brand-500 font-medium hover:underline">المدونة ←</a>
     </div>
     <div class="grid md:grid-cols-2 gap-5">
       {% for a in latest_articles %}
       <a href="/blog/{{ a.slug }}"
-         class="p-6 rounded-2xl bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card transition-all group">
-        <h3 class="font-display font-bold text-slate-900 group-hover:text-brand-500 transition-colors">{{ a.title }}</h3>
-        <p class="text-sm text-slate-500 mt-2 leading-6">{{ a.excerpt }}</p>
-        <p class="text-xs text-slate-400 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د قراءة</p>
+         class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:shadow-card transition-all group">
+        <h3 class="font-display font-bold text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">{{ a.title }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-6">{{ a.excerpt }}</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د قراءة</p>
       </a>
       {% endfor %}
     </div>
@@ -211,11 +211,11 @@
 {% endif %}
 
 {# ── FAQ ── #}
-<section class="bg-slate-50 py-20">
+<section class="bg-slate-50 dark:bg-slate-900 py-20 transition-colors">
   <div class="container mx-auto max-w-3xl px-4">
     <div class="text-center mb-12">
       <p class="text-brand-500 text-sm font-semibold mb-2">أسئلة شائعة</p>
-      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">FAQ</h2>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">FAQ</h2>
     </div>
     <div class="space-y-3" x-data="{open:null}">
       {% set faqs = [
@@ -230,17 +230,17 @@
       ] %}
       {% for q, a in faqs %}
       {% set idx = loop.index %}
-      <div class="rounded-xl bg-white border border-slate-200 overflow-hidden">
-        <button class="w-full flex items-center justify-between px-5 py-4 text-right font-semibold text-slate-800 hover:text-brand-500 transition-colors"
+      <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <button class="w-full flex items-center justify-between px-5 py-4 text-right font-semibold text-slate-800 dark:text-slate-100 hover:text-brand-500 transition-colors"
                 @click="open = (open === {{ idx }}) ? null : {{ idx }}">
           <span>{{ q }}</span>
-          <svg class="size-5 text-slate-400 shrink-0 transition-transform duration-200 me-2"
+          <svg class="size-5 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-200 me-2"
                :class="open === {{ idx }} ? 'rotate-180 text-brand-500' : ''"
                fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
-        <div x-show="open === {{ idx }}" x-transition class="px-5 pb-4 text-sm text-slate-500 leading-7 border-t border-slate-100">
+        <div x-show="open === {{ idx }}" x-transition class="px-5 pb-4 text-sm text-slate-500 dark:text-slate-400 leading-7 border-t border-slate-100 dark:border-slate-700">
           {{ a }}
         </div>
       </div>
@@ -255,15 +255,15 @@
   <div class="container mx-auto max-w-7xl px-4">
     <div class="mb-10">
       <p class="text-brand-500 text-sm font-semibold mb-1">متجر رقمي</p>
-      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900">منتجات رقمية</h2>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">منتجات رقمية</h2>
     </div>
     <div class="grid md:grid-cols-4 gap-5">
       {% for p in products %}
       <a href="/products/{{ p.slug }}"
-         class="rounded-2xl bg-white border border-slate-200 hover:border-brand-400 hover:shadow-card p-5 transition-all group">
-        <h3 class="font-display font-bold text-slate-900 group-hover:text-brand-500 transition-colors">{{ p.title }}</h3>
-        <p class="text-sm text-slate-500 mt-2 leading-6">{{ p.short_description }}</p>
-        <p class="mt-3 text-brand-500 font-bold">{{ p.price }} {{ p.currency }}</p>
+         class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:shadow-card p-5 transition-all group">
+        <h3 class="font-display font-bold text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">{{ p.title }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-6">{{ p.short_description }}</p>
+        <p class="mt-3 text-brand-500 dark:text-brand-400 font-bold">{{ p.price }} {{ p.currency }}</p>
       </a>
       {% endfor %}
     </div>

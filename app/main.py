@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -19,6 +19,7 @@ from app.database.session import engine, Base, AsyncSessionLocal
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.analytics import AnalyticsMiddleware
 from app.middleware.redirects import RedirectMiddleware
+from app.i18n import set_locale, get_locale, LOCALE_COOKIE, SUPPORTED_LOCALES
 from app.routes import public, seo_routes, auth_routes, downloads, chat as chat_route
 from app.admin.router import router as admin_router
 from app.utils.templates import templates
@@ -106,8 +107,17 @@ class NoCacheAdminMiddleware(BaseHTTPMiddleware):
             response.headers["Expires"] = "0"
         return response
 
+# ── Middleware: تحديد لغة الواجهة الحالية من الكوكيز ──────────
+class LocaleMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        lang = request.cookies.get(LOCALE_COOKIE, "ar")
+        set_locale(lang if lang in SUPPORTED_LOCALES else "ar")
+        response = await call_next(request)
+        return response
+
 # Middleware order matters (executed bottom-up)
 app.add_middleware(NoCacheAdminMiddleware)
+app.add_middleware(LocaleMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=600)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY,
@@ -131,6 +141,15 @@ app.include_router(admin_router)
 @app.get("/healthz")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/set-lang/{lang}")
+async def set_lang(lang: str, request: Request):
+    referer = request.headers.get("referer", "/")
+    resp = RedirectResponse(url=referer, status_code=303)
+    resp.set_cookie(LOCALE_COOKIE, lang if lang in SUPPORTED_LOCALES else "ar",
+                     max_age=60 * 60 * 24 * 365, samesite="lax")
+    return resp
 
 
 @app.exception_handler(404)

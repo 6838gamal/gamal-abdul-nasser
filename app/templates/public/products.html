@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="container mx-auto max-w-5xl px-4 py-16">
-<h1 class="font-display text-4xl mb-8 text-gold-400">المنتجات الرقمية</h1>
+<h1 class="font-display text-4xl mb-8 text-brand-600 dark:text-brand-400">{{ t('nav.products') }}</h1>
 <div class="grid md:grid-cols-3 gap-5">
 {% for p in items %}
-<a href="/products/{{ p.slug }}" class="rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/40 p-5 group">
+<a href="/products/{{ p.slug }}" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 shadow-card p-5 group transition-colors">
 {% if p.cover_image %}<img src="{{ p.cover_image }}" alt="{{ p.title }}" class="aspect-square object-cover rounded-xl mb-4">{% endif %}
-<h3 class="font-display group-hover:text-gold-400">{{ p.title }}</h3>
-<p class="text-sm text-neutral-400 mt-1">{{ p.short_description }}</p>
-<p class="mt-3 text-gold-400 font-bold">{{ p.price }} {{ p.currency }}</p>
+<h3 class="font-display text-slate-900 dark:text-white group-hover:text-brand-500">{{ p.title }}</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ p.short_description }}</p>
+<p class="mt-3 text-brand-600 dark:text-brand-400 font-bold">{{ p.price }} {{ p.currency }}</p>
 </a>{% endfor %}
 </div></section>{% endblock %}

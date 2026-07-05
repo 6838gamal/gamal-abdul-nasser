@@ -1,4 +1,4 @@
-<footer class="bg-brand-900 text-slate-400 mt-0">
+<footer class="bg-brand-900 dark:bg-slate-950 text-slate-400 mt-0 transition-colors">
   <div class="container mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-3 gap-8 text-sm">
     <div>
       <h4 class="font-display text-brand-400 text-lg mb-3 font-bold">{{ site.name }}</h4>
@@ -31,27 +31,27 @@
       </div>
     </div>
     <div>
-      <h4 class="font-display text-white mb-3 font-semibold">روابط</h4>
+      <h4 class="font-display text-white mb-3 font-semibold">{{ t('footer.links') }}</h4>
       <ul class="space-y-2">
-        <li><a href="/about" class="hover:text-brand-400 transition-colors">من أنا</a></li>
-        <li><a href="/projects" class="hover:text-brand-400 transition-colors">المشاريع</a></li>
-        <li><a href="/services" class="hover:text-brand-400 transition-colors">الخدمات</a></li>
-        <li><a href="/blog" class="hover:text-brand-400 transition-colors">المدونة</a></li>
-        <li><a href="/contact" class="hover:text-brand-400 transition-colors">التواصل</a></li>
+        <li><a href="/about" class="hover:text-brand-400 transition-colors">{{ t('footer.about') }}</a></li>
+        <li><a href="/projects" class="hover:text-brand-400 transition-colors">{{ t('footer.projects') }}</a></li>
+        <li><a href="/services" class="hover:text-brand-400 transition-colors">{{ t('footer.services') }}</a></li>
+        <li><a href="/blog" class="hover:text-brand-400 transition-colors">{{ t('footer.blog') }}</a></li>
+        <li><a href="/contact" class="hover:text-brand-400 transition-colors">{{ t('footer.contact') }}</a></li>
       </ul>
     </div>
     <div>
-      <h4 class="font-display text-white mb-3 font-semibold">أخرى</h4>
+      <h4 class="font-display text-white mb-3 font-semibold">{{ t('footer.other') }}</h4>
       <ul class="space-y-2">
         <li><a href="/rss.xml" class="hover:text-brand-400 transition-colors">RSS Feed</a></li>
         <li><a href="/sitemap.xml" class="hover:text-brand-400 transition-colors">Sitemap</a></li>
-        <li><a href="/contact" class="hover:text-brand-400 transition-colors">احجز استشارة</a></li>
+        <li><a href="/contact" class="hover:text-brand-400 transition-colors">{{ t('footer.consult') }}</a></li>
       </ul>
     </div>
   </div>
   <div class="border-t border-white/10 py-5 text-center text-xs text-slate-500">
     © {{ site.year }} {{ site.author }} —
-    <span id="admin-trigger" class="cursor-default select-none">جميع الحقوق محفوظة</span>
+    <span id="admin-trigger" class="cursor-default select-none">{{ t('footer.rights') }}</span>
   </div>
 </footer>
 

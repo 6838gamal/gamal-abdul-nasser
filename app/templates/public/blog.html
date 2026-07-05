@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="container mx-auto max-w-5xl px-4 py-16">
-<h1 class="font-display text-4xl mb-6 text-gold-400">المدونة</h1>
-<form class="mb-8 flex gap-2"><input name="q" value="{{ q }}" placeholder="ابحث في المقالات…" class="flex-1 px-4 py-2 rounded-lg bg-ink-700 border border-white/10"><button class="px-5 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">بحث</button></form>
+<h1 class="font-display text-4xl mb-6 text-brand-600 dark:text-brand-400">{{ t('nav.blog') }}</h1>
+<form class="mb-8 flex gap-2"><input name="q" value="{{ q }}" placeholder="ابحث في المقالات…" class="flex-1 px-4 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"><button class="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-bold transition-colors">بحث</button></form>
 <div class="grid md:grid-cols-2 gap-5">
 {% for a in items %}
-<a href="/blog/{{ a.slug }}" class="p-6 rounded-2xl bg-ink-700 border border-white/5 hover:border-gold-500/40 group">
+<a href="/blog/{{ a.slug }}" class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 shadow-card group transition-colors">
 {% if a.cover_image %}<img src="{{ a.cover_image }}" loading="lazy" class="aspect-video object-cover rounded-xl mb-4">{% endif %}
-<h3 class="font-display text-lg group-hover:text-gold-400">{{ a.title }}</h3>
-<p class="text-sm text-neutral-400 mt-2">{{ a.excerpt }}</p>
-<p class="text-xs text-neutral-500 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د</p>
-</a>{% else %}<p class="text-neutral-400">لا توجد مقالات بعد.</p>{% endfor %}
+<h3 class="font-display text-lg text-slate-900 dark:text-white group-hover:text-brand-500">{{ a.title }}</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-2">{{ a.excerpt }}</p>
+<p class="text-xs text-slate-400 dark:text-slate-500 mt-3">{{ a.published_at | fmtdate }} • {{ a.reading_time }} د</p>
+</a>{% else %}<p class="text-slate-500 dark:text-slate-400">لا توجد مقالات بعد.</p>{% endfor %}
 </div></section>{% endblock %}
