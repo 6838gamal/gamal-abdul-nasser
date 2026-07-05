@@ -83,7 +83,13 @@ async def lifespan(app: FastAPI):
         # تحميل جميع الإعدادات (ستظهر القيم المحدَّثة الآن)
         await load_site_settings(db)
         _apply_to_templates()
-    yield
+
+    from app.services import heartbeat
+    heartbeat.start()
+    try:
+        yield
+    finally:
+        await heartbeat.stop()
 
 
 app = FastAPI(

@@ -177,6 +177,13 @@ tailwind.config = {
       <p class="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">النظام</p>
     </div>
 
+    <a href="/admin/heartbeat" @click="sideOpen=false"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
+              {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='heartbeat' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h1a2.5 2.5 0 012.5 2.5v0a2.5 2.5 0 002.5 2.5h1.242M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h2l1.5-3 2 6 1.5-3H18"/></svg>
+      زاوية التنشيط
+    </a>
+
     <a href="/admin/analytics" @click="sideOpen=false"
        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150
               {{ 'bg-gold-500/15 text-gold-300 font-semibold' if active=='analytics' else 'text-neutral-400 hover:text-white hover:bg-white/[0.06]' }}">

@@ -19,10 +19,12 @@ from app.models.message import Message
 from app.models.analytics import PageView
 from app.models.seo import Redirect, CustomSitemapURL
 from app.models.knowledge import KnowledgeEntry
+from app.models.heartbeat import HeartbeatLog
 from app.seo.indexing import ping_search_engines, google_indexing_request
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.utils.site_settings import load_site_settings, save_site_settings
+from app.services import heartbeat as heartbeat_service
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 
@@ -565,6 +567,49 @@ async def analytics(request: Request, db: AsyncSession = Depends(get_db),
         "request": request, "by_day": by_day, "by_device": by_device,
         "referrers": referrers, "top": top, "user": user, "active": "analytics",
     })
+
+
+# ============ زاوية التنشيط (Heartbeat / Keep-Alive) ============
+@router.get("/heartbeat")
+async def heartbeat_page(request: Request, db: AsyncSession = Depends(get_db),
+                          user: User = Depends(require_admin)):
+    logs = (await db.execute(
+        select(HeartbeatLog).order_by(HeartbeatLog.checked_at.desc()).limit(50)
+    )).scalars().all()
+    s = heartbeat_service.state
+    now = datetime.now(timezone.utc)
+    uptime_seconds = (now - s.app_started_at).total_seconds()
+    return templates.TemplateResponse("admin/heartbeat.html", {
+        "request": request, "user": user, "active": "heartbeat",
+        "logs": logs,
+        "app_started_at": s.app_started_at,
+        "uptime_seconds": uptime_seconds,
+        "last_checked_at": s.last_checked_at,
+        "last_success": s.last_success,
+        "next_run_at": s.next_run_at,
+        "total_checks": s.total_checks,
+        "success_count": s.success_count,
+        "failure_count": s.failure_count,
+        "last_error": s.last_error,
+        "interval_seconds": heartbeat_service.INTERVAL_SECONDS,
+    })
+
+
+@router.get("/heartbeat/status")
+async def heartbeat_status(user: User = Depends(require_admin)):
+    """JSON مختصر لتحديث اللوحة دون إعادة تحميل الصفحة."""
+    s = heartbeat_service.state
+    now = datetime.now(timezone.utc)
+    return {
+        "uptime_seconds": (now - s.app_started_at).total_seconds(),
+        "last_checked_at": s.last_checked_at.isoformat() if s.last_checked_at else None,
+        "last_success": s.last_success,
+        "next_run_at": s.next_run_at.isoformat() if s.next_run_at else None,
+        "total_checks": s.total_checks,
+        "success_count": s.success_count,
+        "failure_count": s.failure_count,
+        "last_error": s.last_error,
+    }
 
 
 # ============ Users ============

@@ -1,0 +1,173 @@
+{% extends 'admin/_layout.html' %}{% block heading %}زاوية التنشيط{% endblock %}{% block content %}
+
+<div id="hb-app"
+     x-data="heartbeatApp({
+       uptimeSeconds: {{ uptime_seconds }},
+       lastCheckedAt: {{ (last_checked_at.isoformat() if last_checked_at else 'null') | tojson }},
+       lastSuccess: {{ (last_success if last_success is not none else 'null') | tojson }},
+       nextRunAt: {{ (next_run_at.isoformat() if next_run_at else 'null') | tojson }},
+       totalChecks: {{ total_checks }},
+       successCount: {{ success_count }},
+       failureCount: {{ failure_count }},
+       lastError: {{ (last_error or '') | tojson }},
+       intervalSeconds: {{ interval_seconds }},
+     })"
+     x-init="init()">
+
+  <p class="text-sm text-neutral-400 mb-6 leading-7">
+    تُنفّذ زاوية التنشيط طلباً تلقائياً إلى قاعدة البيانات كل
+    <span class="text-gold-400 font-bold">{{ interval_seconds // 60 }} دقائق</span>
+    للتحقق من سلامة الاتصال ومنع خمول السيرفر أو غفوته.
+  </p>
+
+  <!-- بطاقات الحالة -->
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+    <div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+      <p class="text-xs text-neutral-500 mb-2">حالة الخدمة</p>
+      <div class="flex items-center gap-2">
+        <span class="size-2.5 rounded-full bg-green-400 animate-pulse"></span>
+        <span class="font-display font-bold text-lg text-green-400">تعمل الآن</span>
+      </div>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+      <p class="text-xs text-neutral-500 mb-2">إجمالي وقت الاتصال</p>
+      <p class="font-display font-bold text-lg text-gold-400" x-text="fmtDuration(uptimeSeconds)"></p>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+      <p class="text-xs text-neutral-500 mb-2">آخر مرة تم فيها الاتصال</p>
+      <p class="font-bold text-sm" x-text="lastCheckedAt ? fmtAgo(lastCheckedAt) : 'لم يبدأ بعد'"></p>
+      <p class="mt-1 text-xs" :class="lastSuccess === false ? 'text-red-400' : 'text-green-400'"
+         x-text="lastSuccess === null ? '' : (lastSuccess ? 'نجح الاتصال ✓' : 'فشل الاتصال ✕')"></p>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+      <p class="text-xs text-neutral-500 mb-2">الاتصال القادم خلال</p>
+      <p class="font-display font-bold text-lg text-gold-400" x-text="fmtDuration(countdown)"></p>
+    </div>
+
+  </div>
+
+  <!-- إحصاءات النجاح/الفشل -->
+  <div class="grid sm:grid-cols-3 gap-4 mb-6">
+    <div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
+      <p class="text-xs text-neutral-500 mb-2">إجمالي المحاولات</p>
+      <p class="font-display font-bold text-2xl" x-text="totalChecks"></p>
+    </div>
+    <div class="p-5 rounded-2xl bg-ink-700 border border-green-500/20">
+      <p class="text-xs text-neutral-500 mb-2">اتصالات ناجحة</p>
+      <p class="font-display font-bold text-2xl text-green-400" x-text="successCount"></p>
+    </div>
+    <div class="p-5 rounded-2xl bg-ink-700 border border-red-500/20">
+      <p class="text-xs text-neutral-500 mb-2">اتصالات فاشلة</p>
+      <p class="font-display font-bold text-2xl text-red-400" x-text="failureCount"></p>
+    </div>
+  </div>
+
+  <template x-if="lastError">
+    <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm mb-6">
+      <span class="font-bold">آخر خطأ:</span> <span x-text="lastError"></span>
+    </div>
+  </template>
+
+  <!-- سجل النبضات -->
+  <div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+    <div class="px-5 py-4 border-b border-white/5">
+      <h3 class="font-display font-bold">سجل آخر النبضات</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-neutral-500 text-xs border-b border-white/5">
+            <th class="text-right py-2 px-5 font-medium">الوقت</th>
+            <th class="text-right py-2 px-5 font-medium">الحالة</th>
+            <th class="text-right py-2 px-5 font-medium">زمن الاستجابة</th>
+            <th class="text-right py-2 px-5 font-medium">تفاصيل الخطأ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in logs %}
+          <tr class="border-b border-white/5">
+            <td class="py-2.5 px-5 text-neutral-300">{{ l.checked_at.strftime('%Y-%m-%d %H:%M:%S') if l.checked_at else '—' }}</td>
+            <td class="py-2.5 px-5">
+              {% if l.success %}
+              <span class="inline-flex items-center gap-1.5 text-green-400"><span class="size-1.5 rounded-full bg-green-400"></span> ناجح</span>
+              {% else %}
+              <span class="inline-flex items-center gap-1.5 text-red-400"><span class="size-1.5 rounded-full bg-red-400"></span> فشل</span>
+              {% endif %}
+            </td>
+            <td class="py-2.5 px-5 text-neutral-400">{{ l.latency_ms }} ms</td>
+            <td class="py-2.5 px-5 text-red-300/80 text-xs">{{ l.error or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="py-8 px-5 text-center text-neutral-500">لا توجد نبضات بعد — سيظهر أول سجل خلال دقائق قليلة.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function heartbeatApp(cfg) {
+  return {
+    uptimeSeconds: cfg.uptimeSeconds,
+    lastCheckedAt: cfg.lastCheckedAt,
+    lastSuccess: cfg.lastSuccess,
+    nextRunAt: cfg.nextRunAt,
+    totalChecks: cfg.totalChecks,
+    successCount: cfg.successCount,
+    failureCount: cfg.failureCount,
+    lastError: cfg.lastError,
+    intervalSeconds: cfg.intervalSeconds,
+    countdown: 0,
+    init() {
+      this.recomputeCountdown();
+      setInterval(() => {
+        this.uptimeSeconds += 1;
+        this.recomputeCountdown();
+      }, 1000);
+      // مزامنة الحالة الفعلية من السيرفر كل 20 ثانية
+      setInterval(() => this.refresh(), 20000);
+    },
+    recomputeCountdown() {
+      if (!this.nextRunAt) { this.countdown = this.intervalSeconds; return; }
+      const diff = (new Date(this.nextRunAt).getTime() - Date.now()) / 1000;
+      this.countdown = diff > 0 ? Math.round(diff) : 0;
+    },
+    async refresh() {
+      try {
+        const res = await fetch('/admin/heartbeat/status');
+        if (!res.ok) return;
+        const d = await res.json();
+        this.uptimeSeconds = d.uptime_seconds;
+        this.lastCheckedAt = d.last_checked_at;
+        this.lastSuccess = d.last_success;
+        this.nextRunAt = d.next_run_at;
+        this.totalChecks = d.total_checks;
+        this.successCount = d.success_count;
+        this.failureCount = d.failure_count;
+        this.lastError = d.last_error;
+        this.recomputeCountdown();
+      } catch (e) {}
+    },
+    fmtDuration(sec) {
+      sec = Math.max(0, Math.round(sec));
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) return h + ' س ' + m + ' د ' + s + ' ث';
+      if (m > 0) return m + ' د ' + s + ' ث';
+      return s + ' ث';
+    },
+    fmtAgo(iso) {
+      const diff = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+      return this.fmtDuration(diff) + ' مضت';
+    }
+  }
+}
+</script>
+{% endblock %}
