@@ -48,6 +48,9 @@ google-api-python-client==2.149.0
 # ─── Redis (اختياري - لتخزين rate-limit في الإنتاج) ──────────────
 redis==5.1.1
 
+# ─── Google Gemini API ────────────────────────────────────────────
+google-generativeai==0.8.6
+
 # ─── Supabase Storage ─────────────────────────────────────────────
 supabase==2.16.0
 alembic==1.13.3
