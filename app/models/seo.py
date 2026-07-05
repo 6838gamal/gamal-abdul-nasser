@@ -19,3 +19,14 @@ class SeoSetting(Base):
     key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
     value: Mapped[str] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class CustomSitemapURL(Base):
+    """روابط مخصصة يضيفها المدير إلى ملف Sitemap."""
+    __tablename__ = "custom_sitemap_urls"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    url: Mapped[str] = mapped_column(String(1000), unique=True, index=True)
+    changefreq: Mapped[str] = mapped_column(String(20), default="monthly")
+    priority: Mapped[str] = mapped_column(String(5), default="0.5")
+    notes: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

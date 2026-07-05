@@ -17,7 +17,7 @@ from app.models.service import Service
 from app.models.product import Product, Order
 from app.models.message import Message
 from app.models.analytics import PageView
-from app.models.seo import Redirect
+from app.models.seo import Redirect, CustomSitemapURL
 from app.seo.indexing import ping_search_engines, google_indexing_request
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
@@ -425,8 +425,10 @@ async def cat_add(name: str = Form(...), description: str = Form(""),
 async def seo_panel(request: Request, db: AsyncSession = Depends(get_db),
                      user: User = Depends(require_admin)):
     redirects = (await db.execute(select(Redirect).order_by(Redirect.id.desc()))).scalars().all()
+    custom_urls = (await db.execute(select(CustomSitemapURL).order_by(CustomSitemapURL.id))).scalars().all()
     return templates.TemplateResponse("admin/seo.html", {
-        "request": request, "redirects": redirects, "user": user, "active": "seo",
+        "request": request, "redirects": redirects, "custom_urls": custom_urls,
+        "user": user, "active": "seo",
     })
 
 
@@ -436,6 +438,40 @@ async def add_redirect(source: str = Form(...), target: str = Form(...),
                         db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
     db.add(Redirect(source=source.strip(), target=target.strip(), status_code=status_code))
     await db.commit()
+    return RedirectResponse("/admin/seo", status_code=303)
+
+
+@router.post("/seo/redirects/{rid}/delete")
+async def delete_redirect(rid: int, db: AsyncSession = Depends(get_db),
+                           user: User = Depends(require_admin)):
+    obj = await db.get(Redirect, rid)
+    if obj:
+        await db.delete(obj)
+        await db.commit()
+    return RedirectResponse("/admin/seo", status_code=303)
+
+
+@router.post("/seo/sitemap/add")
+async def add_sitemap_url(url: str = Form(...), changefreq: str = Form("weekly"),
+                           priority: str = Form("0.5"), notes: str = Form(""),
+                           db: AsyncSession = Depends(get_db), user: User = Depends(require_admin)):
+    existing = (await db.execute(select(CustomSitemapURL).where(CustomSitemapURL.url == url.strip()))).scalar_one_or_none()
+    if not existing:
+        db.add(CustomSitemapURL(
+            url=url.strip(), changefreq=changefreq, priority=priority,
+            notes=notes.strip() or None,
+        ))
+        await db.commit()
+    return RedirectResponse("/admin/seo", status_code=303)
+
+
+@router.post("/seo/sitemap/{sid}/delete")
+async def delete_sitemap_url(sid: int, db: AsyncSession = Depends(get_db),
+                              user: User = Depends(require_admin)):
+    obj = await db.get(CustomSitemapURL, sid)
+    if obj:
+        await db.delete(obj)
+        await db.commit()
     return RedirectResponse("/admin/seo", status_code=303)
 
 
@@ -479,7 +515,7 @@ async def analytics(request: Request, db: AsyncSession = Depends(get_db),
 async def users_list(request: Request, db: AsyncSession = Depends(get_db),
                       user: User = Depends(require_admin)):
     items = (await db.execute(select(User))).scalars().all()
-    return templates.TemplateResponse("admin/users.html", {
+    return templates.TemplateResponse("admin/users_list.html", {
         "request": request, "items": items, "user": user, "active": "users",
     })
 

@@ -1,24 +1,209 @@
-{% extends 'admin/_layout.html' %}{% block heading %}SEO والأرشفة{% endblock %}{% block content %}
-<div class="grid md:grid-cols-2 gap-5">
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
-<h3 class="font-display mb-4">إعادة الفهرسة</h3>
-<form method="post" action="/admin/seo/reindex"><button class="px-5 py-3 rounded-lg bg-gold-500 text-ink-900 font-bold">Ping محركات البحث الآن</button></form>
-<ul class="mt-4 text-sm space-y-1 text-neutral-400">
-<li>• <a class="text-gold-400" href="/sitemap.xml">/sitemap.xml</a></li>
-<li>• <a class="text-gold-400" href="/news-sitemap.xml">/news-sitemap.xml</a></li>
-<li>• <a class="text-gold-400" href="/rss.xml">/rss.xml</a></li>
-<li>• <a class="text-gold-400" href="/robots.txt">/robots.txt</a></li>
-<li>• <a class="text-gold-400" href="/llms.txt">/llms.txt</a></li>
-</ul>
+{% extends 'admin/_layout.html' %}
+{% block heading %}SEO والأرشفة{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  {# ── شريط الروابط السريعة ── #}
+  <div class="flex flex-wrap gap-3">
+    <a href="/sitemap.xml" target="_blank"
+       class="flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-700 border border-white/5 text-sm text-gold-400 hover:bg-ink-600 transition-colors">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+      </svg>
+      sitemap.xml
+    </a>
+    <a href="/news-sitemap.xml" target="_blank"
+       class="flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-700 border border-white/5 text-sm text-gold-400 hover:bg-ink-600 transition-colors">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+      </svg>
+      news-sitemap.xml
+    </a>
+    <a href="/rss.xml" target="_blank"
+       class="flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-700 border border-white/5 text-sm text-gold-400 hover:bg-ink-600 transition-colors">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7M6 17a1 1 0 110 2 1 1 0 010-2z"/>
+      </svg>
+      rss.xml
+    </a>
+    <a href="/robots.txt" target="_blank"
+       class="flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-700 border border-white/5 text-sm text-neutral-400 hover:text-white hover:bg-ink-600 transition-colors">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      robots.txt
+    </a>
+    <a href="/llms.txt" target="_blank"
+       class="flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-700 border border-white/5 text-sm text-neutral-400 hover:text-white hover:bg-ink-600 transition-colors">
+      <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg>
+      llms.txt
+    </a>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+
+    {# ── خريطة الموقع: الروابط المخصصة ── #}
+    <div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+        <h3 class="font-display font-bold">خريطة الموقع — روابط مخصصة</h3>
+        <span class="text-xs text-neutral-500">{{ custom_urls|length }} رابط</span>
+      </div>
+
+      {# نموذج الإضافة #}
+      <form method="post" action="/admin/seo/sitemap/add" class="px-5 py-4 border-b border-white/5 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="text-xs text-neutral-500 mb-1 block">الرابط الكامل</label>
+            <input name="url" required placeholder="https://example.com/page أو /page"
+                   class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+          </div>
+          <div>
+            <label class="text-xs text-neutral-500 mb-1 block">تكرار التغيير</label>
+            <select name="changefreq"
+                    class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+              <option value="always">always</option>
+              <option value="hourly">hourly</option>
+              <option value="daily">daily</option>
+              <option value="weekly" selected>weekly</option>
+              <option value="monthly">monthly</option>
+              <option value="yearly">yearly</option>
+              <option value="never">never</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-neutral-500 mb-1 block">الأولوية (0.0 – 1.0)</label>
+            <select name="priority"
+                    class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+              <option value="1.0">1.0 — أعلى</option>
+              <option value="0.9">0.9</option>
+              <option value="0.8">0.8</option>
+              <option value="0.7">0.7</option>
+              <option value="0.6">0.6</option>
+              <option value="0.5" selected>0.5 — متوسط</option>
+              <option value="0.4">0.4</option>
+              <option value="0.3">0.3</option>
+              <option value="0.2">0.2</option>
+              <option value="0.1">0.1 — أدنى</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs text-neutral-500 mb-1 block">ملاحظة (اختياري)</label>
+            <input name="notes" placeholder="وصف مختصر لهذا الرابط"
+                   class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+          </div>
+        </div>
+        <button type="submit"
+                class="w-full px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold text-sm hover:bg-gold-400 transition-colors">
+          + إضافة رابط إلى Sitemap
+        </button>
+      </form>
+
+      {# قائمة الروابط المخصصة #}
+      <div class="divide-y divide-white/5">
+        {% for cu in custom_urls %}
+        <div class="flex items-start gap-3 px-5 py-3">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-gold-400 truncate">{{ cu.url }}</p>
+            <p class="text-xs text-neutral-500 mt-0.5">
+              {{ cu.changefreq }} · أولوية {{ cu.priority }}
+              {% if cu.notes %} · {{ cu.notes }}{% endif %}
+            </p>
+          </div>
+          <form method="post" action="/admin/seo/sitemap/{{ cu.id }}/delete"
+                onsubmit="return confirm('حذف هذا الرابط؟')">
+            <button type="submit"
+                    class="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors shrink-0">
+              حذف
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <div class="px-5 py-8 text-center text-neutral-500 text-sm">
+          لا توجد روابط مخصصة بعد.<br>
+          <span class="text-xs text-neutral-600">الروابط الديناميكية (المقالات، المشاريع…) تُضاف تلقائياً.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="space-y-6">
+
+      {# ── إعادة الفهرسة ── #}
+      <div class="rounded-2xl bg-ink-700 border border-white/5 p-5">
+        <h3 class="font-display font-bold mb-3">فهرسة محركات البحث</h3>
+        <p class="text-sm text-neutral-400 mb-4">
+          يُرسل إشعاراً فورياً إلى Google وBing وYandex لإعادة فحص خريطة الموقع.
+        </p>
+        <form method="post" action="/admin/seo/reindex">
+          <button class="w-full px-5 py-2.5 rounded-lg bg-gold-500 text-ink-900 font-bold text-sm hover:bg-gold-400 transition-colors">
+            Ping محركات البحث الآن
+          </button>
+        </form>
+      </div>
+
+      {# ── إعادة التوجيه (Redirects) ── #}
+      <div class="rounded-2xl bg-ink-700 border border-white/5 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <h3 class="font-display font-bold">إعادة التوجيه (Redirects)</h3>
+          <span class="text-xs text-neutral-500">{{ redirects|length }} قاعدة</span>
+        </div>
+        <form method="post" action="/admin/seo/redirects/add" class="px-5 py-4 border-b border-white/5 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-neutral-500 mb-1 block">من (المصدر)</label>
+              <input name="source" required placeholder="/old-page"
+                     class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="text-xs text-neutral-500 mb-1 block">إلى (الهدف)</label>
+              <input name="target" required placeholder="/new-page"
+                     class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-neutral-500 mb-1 block">نوع التوجيه</label>
+              <select name="status_code"
+                      class="w-full px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-sm focus:border-gold-500/50 focus:outline-none transition-colors">
+                <option value="301">301 — دائم</option>
+                <option value="302">302 — مؤقت</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button type="submit"
+                      class="w-full px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold text-sm hover:bg-gold-400 transition-colors">
+                + إضافة
+              </button>
+            </div>
+          </div>
+        </form>
+        <div class="divide-y divide-white/5 max-h-64 overflow-y-auto">
+          {% for r in redirects %}
+          <div class="flex items-center gap-2 px-5 py-2.5">
+            <span class="text-xs text-neutral-400 truncate flex-1">{{ r.source }}</span>
+            <svg class="size-3 text-neutral-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+            <span class="text-xs text-gold-400 truncate flex-1">{{ r.target }}</span>
+            <span class="text-[10px] text-neutral-600 shrink-0">{{ r.status_code }}</span>
+            <form method="post" action="/admin/seo/redirects/{{ r.id }}/delete"
+                  onsubmit="return confirm('حذف هذا التوجيه؟')">
+              <button type="submit" class="text-xs text-red-400 hover:text-red-300 px-1.5 py-0.5 rounded hover:bg-red-500/10 transition-colors">
+                ✕
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <div class="px-5 py-6 text-center text-neutral-500 text-sm">لا توجد قواعد توجيه بعد</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
-<div class="p-5 rounded-2xl bg-ink-700 border border-white/5">
-<h3 class="font-display mb-4">إعادة التوجيه (Redirects)</h3>
-<form method="post" action="/admin/seo/redirects/add" class="grid grid-cols-3 gap-2 mb-4">
-<input name="source" required placeholder="/old" class="px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
-<input name="target" required placeholder="/new" class="px-3 py-2 rounded-lg bg-ink-800 border border-white/10">
-<select name="status_code" class="px-3 py-2 rounded-lg bg-ink-800 border border-white/10"><option>301</option><option>302</option></select>
-<button class="col-span-3 px-4 py-2 rounded-lg bg-gold-500 text-ink-900 font-bold">إضافة</button>
-</form>
-<ul class="text-sm space-y-1">{% for r in redirects %}<li>{{ r.source }} → {{ r.target }} ({{ r.status_code }})</li>{% endfor %}</ul>
-</div>
-</div>{% endblock %}
+{% endblock %}

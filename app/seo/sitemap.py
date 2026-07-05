@@ -5,6 +5,7 @@ from app.models.article import Article
 from app.models.project import Project
 from app.models.product import Product
 from app.models.service import Service
+from app.models.seo import CustomSitemapURL
 from app.core.config import settings
 
 
@@ -40,6 +41,12 @@ async def build_sitemap(db) -> str:
         urls.append(_url(f"{base}/services/{s.slug}"))
     for prod in (await db.execute(select(Product).where(Product.is_published == True))).scalars():
         urls.append(_url(f"{base}/products/{prod.slug}"))
+
+    # الروابط المخصصة التي يضيفها المدير
+    for cu in (await db.execute(select(CustomSitemapURL).order_by(CustomSitemapURL.id))).scalars():
+        loc = cu.url if cu.url.startswith("http://") or cu.url.startswith("https://") \
+              else base + "/" + cu.url.lstrip("/")
+        urls.append(_url(loc, changefreq=cu.changefreq, priority=cu.priority))
 
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
