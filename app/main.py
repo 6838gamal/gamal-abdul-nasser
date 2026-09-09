@@ -24,6 +24,7 @@ from app.routes import public, seo_routes, auth_routes, downloads, chat as chat_
 from app.admin.router import router as admin_router
 from app.utils.templates import templates
 from app.models.user import User
+from app.models.chat import ChatLog  # ✅ تم إضافة استيراد ChatLog
 
 setup_logging("INFO" if not settings.DEBUG else "DEBUG")
 log = logging.getLogger("app")
