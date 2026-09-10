@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-6xl px-4 py-16">
+
+  <div class="text-center max-w-3xl mx-auto mb-16">
+    <span class="inline-block px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-semibold mb-4">
+      {{ t('nav.workflow_automation') }}
+    </span>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-5">
+      {% if locale() == 'ar' %}اربط أدواتك، وأتمت سير عملك{% else %}Connect Your Tools, Automate Your Workflow{% endif %}
+    </h1>
+    <p class="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+      {% if locale() == 'ar' %}
+        نبني تدفقات عمل ذكية تربط بين أنظمتك وأدواتك المفضلة — بدون تدخل يدوي، وبدون أخطاء.
+      {% else %}
+        We build intelligent workflows that connect your systems and favorite tools — no manual work, no errors.
+      {% endif %}
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3 justify-center">
+      <a href="/contact" class="px-6 py-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold transition-colors shadow-sm">{{ t('nav.contact') }}</a>
+      <a href="/case-studies" class="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 font-semibold transition-colors">{{ t('nav.case_studies') }}</a>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6 mb-16">
+    {% set integrations = [
+      {'ar': 'تكامل API', 'en': 'API Integration', 'dar': 'ربط أي خدمة لديها API بسهولة.', 'den': 'Connect any service with an API easily.'},
+      {'ar': 'Webhooks', 'en': 'Webhooks', 'dar': 'تفاعل فوري مع الأحداث في نظامك.', 'den': 'Real-time reactions to events in your system.'},
+      {'ar': 'قواعد ذكية', 'en': 'Smart Rules', 'dar': 'شروط منطقية معقدة لاتخاذ القرارات.', 'den': 'Complex logical conditions for decision-making.'}
+    ] %}
+    {% for i in integrations %}
+    <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <h3 class="font-display font-bold text-slate-900 dark:text-white mb-2">{{ i.ar if locale() == 'ar' else i.en }}</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ i.dar if locale() == 'ar' else i.den }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="rounded-3xl bg-gradient-to-br from-brand-500 to-brand-600 p-10 text-center text-white">
+    <h2 class="font-display text-2xl md:text-3xl font-bold mb-3">
+      {% if locale() == 'ar' %}وفّر ساعات من العمل اليدوي{% else %}Save Hours of Manual Work{% endif %}
+    </h2>
+    <a href="/contact" class="inline-block mt-4 px-8 py-3 rounded-lg bg-white text-brand-600 font-bold hover:bg-slate-100 transition-colors">{{ t('nav.contact') }}</a>
+  </div>
+
+</section>
+{% endblock %}
