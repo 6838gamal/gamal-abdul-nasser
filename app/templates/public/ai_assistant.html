@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-6xl px-4 py-16">
+
+  <div class="text-center max-w-3xl mx-auto mb-16">
+    <span class="inline-block px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-semibold mb-4">
+      {{ t('nav.ai_assistant') }}
+    </span>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-5">
+      {% if locale() == 'ar' %}مساعدك الذكي الشخصي{% else %}Your Personal AI Assistant{% endif %}
+    </h1>
+    <p class="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+      {% if locale() == 'ar' %}
+        مساعد ذكاء اصطناعي مخصص يفهم سياق عملك، يساعدك في اتخاذ القرارات، ويؤتمت مهامك اليومية.
+      {% else %}
+        A custom AI assistant that understands your business context, helps you make decisions, and automates your daily tasks.
+      {% endif %}
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3 justify-center">
+      <a href="/contact" class="px-6 py-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold transition-colors shadow-sm">{{ t('nav.contact') }}</a>
+      <a href="/case-studies" class="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 font-semibold transition-colors">{{ t('nav.case_studies') }}</a>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6 mb-16">
+    {% set skills = [
+      {'ar': 'الإجابة على الأسئلة', 'en': 'Q&A', 'dar': 'استناداً إلى مستنداتك وبياناتك الخاصة.', 'den': 'Based on your own documents and data.'},
+      {'ar': 'كتابة المحتوى', 'en': 'Content Writing', 'dar': 'مقالات، إيميلات، وتقارير احترافية.', 'den': 'Articles, emails, and professional reports.'},
+      {'ar': 'تحليل البيانات', 'en': 'Data Analysis', 'dar': 'رؤى وتوصيات من بياناتك.', 'den': 'Insights and recommendations from your data.'},
+      {'ar': 'إدارة المهام', 'en': 'Task Management', 'dar': 'تنظيم مهامك وتذكيرك بالمواعيد.', 'den': 'Organizing tasks and reminding you of deadlines.'}
+    ] %}
+    {% for s in skills %}
+    <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <h3 class="font-display font-bold text-slate-900 dark:text-white mb-2">{{ s.ar if locale() == 'ar' else s.en }}</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ s.dar if locale() == 'ar' else s.den }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="rounded-3xl bg-gradient-to-br from-brand-500 to-brand-600 p-10 text-center text-white">
+    <h2 class="font-display text-2xl md:text-3xl font-bold mb-3">
+      {% if locale() == 'ar' %}احصل على مساعدك الذكي{% else %}Get Your AI Assistant{% endif %}
+    </h2>
+    <a href="/contact" class="inline-block mt-4 px-8 py-3 rounded-lg bg-white text-brand-600 font-bold hover:bg-slate-100 transition-colors">{{ t('nav.contact') }}</a>
+  </div>
+
+</section>
+{% endblock %}
