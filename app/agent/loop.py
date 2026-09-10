@@ -3,7 +3,6 @@
 """
 Agent Loop — حلقة الوكيل
 
-هنا يحدث السحر:
 1. نبني السياق.
 2. نرسل إلى Gemini مع tools.
 3. إذا استدعى أداة → ننفذها ونعيد النتيجة.
@@ -12,6 +11,7 @@ Agent Loop — حلقة الوكيل
 
 import json
 import logging
+import time
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -74,6 +74,11 @@ def build_memory_context(lead: Lead) -> str:
         f"- المرحلة: {lead.stage.value if lead.stage else 'new'}"
     )
     lines.append(f"- النقاط: {lead.score}/100")
+
+    if lead.intent:
+        lines.append(f"- النية: {lead.intent}")
+    if lead.next_action:
+        lines.append(f"- الإجراء التالي: {lead.next_action}")
 
     if lead.summary:
         lines.append("")
@@ -214,8 +219,6 @@ async def run_agent(
 ) -> str:
     """
     تشغيل حلقة الوكيل.
-
-    يعيد الرد النصي النهائي.
     """
 
     # 1) احفظ رسالة المستخدم
@@ -233,6 +236,8 @@ async def run_agent(
     # 4) حلقة الوكيل
     for iteration in range(MAX_ITERATIONS):
 
+        t0 = time.time()
+
         log.info(
             "Agent loop iteration %s for lead=%s",
             iteration + 1, lead.id,
@@ -242,6 +247,8 @@ async def run_agent(
             contents, system_prompt
         )
 
+        elapsed = time.time() - t0
+
         parts = extract_parts(response)
 
         if not parts:
@@ -249,9 +256,9 @@ async def run_agent(
 
         function_calls = extract_function_calls(parts)
 
-        # ─────────────────────────────────
+        # ═════════════════════════════════
         # لا يوجد function call → رد نهائي
-        # ─────────────────────────────────
+        # ═════════════════════════════════
 
         if not function_calls:
             reply = extract_text(parts)
@@ -264,11 +271,16 @@ async def run_agent(
             # لخّص إن لزم
             await maybe_summarize(db, lead, recent)
 
+            log.info(
+                "Agent final reply after %d iteration(s) in %.2fs",
+                iteration + 1, elapsed,
+            )
+
             return reply
 
-        # ─────────────────────────────────
+        # ═════════════════════════════════
         # نفّذ الأدوات
-        # ─────────────────────────────────
+        # ═════════════════════════════════
 
         contents.append({
             "role": "model",
@@ -311,7 +323,9 @@ async def run_agent(
         })
 
     # تجاوز الحد
-    log.warning("Agent loop exceeded max iterations for lead=%s", lead.id)
+    log.warning(
+        "Agent loop exceeded max iterations for lead=%s", lead.id
+    )
 
     fallback = (
         "أعتذر، لم أتمكن من إكمال المعالجة. "
