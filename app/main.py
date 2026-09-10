@@ -34,8 +34,6 @@ from app.models.user import User
 # ══════════════════════════════════════════════════════════════════════
 
 import app.models  # noqa: F401, E402
-# هذا يستورد __init__.py في app/models
-# الذي يجب أن يستورد بدوره: Visitor, Lead, LeadStage, Message
 
 
 setup_logging("INFO" if not settings.DEBUG else "DEBUG")
@@ -51,10 +49,15 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 async def _ensure_chat_tables(conn) -> None:
     """
     تأكد من وجود جداول AI Sales Agent.
+
     يعمل حتى لو كانت الجداول موجودة جزئياً.
+    يعالج حالة وجود جدول messages قديم ببنية مختلفة.
     """
 
+    # ─────────────────────────────────────────────────────────────
     # 1) enum lead_stage
+    # ─────────────────────────────────────────────────────────────
+
     await conn.execute(text("""
         DO $$
         BEGIN
@@ -67,7 +70,10 @@ async def _ensure_chat_tables(conn) -> None:
         END $$;
     """))
 
+    # ─────────────────────────────────────────────────────────────
     # 2) visitors
+    # ─────────────────────────────────────────────────────────────
+
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS visitors (
             id SERIAL PRIMARY KEY,
@@ -86,7 +92,10 @@ async def _ensure_chat_tables(conn) -> None:
             ON visitors (visitor_uid);
     """))
 
+    # ─────────────────────────────────────────────────────────────
     # 3) leads
+    # ─────────────────────────────────────────────────────────────
+
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS leads (
             id SERIAL PRIMARY KEY,
@@ -122,7 +131,29 @@ async def _ensure_chat_tables(conn) -> None:
         "CREATE INDEX IF NOT EXISTS ix_leads_score ON leads (score);"
     ))
 
-    # 4) messages
+    # ─────────────────────────────────────────────────────────────
+    # 4) messages — مع معالجة البنية القديمة
+    # ─────────────────────────────────────────────────────────────
+    #
+    # قد يكون هناك جدول messages قديم بدون عمود lead_id.
+    # نكتشف ذلك ونعيد إنشاء الجدول إن لزم.
+    # ─────────────────────────────────────────────────────────────
+
+    result = await conn.execute(text("""
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'messages'
+    """))
+    existing_cols = {row[0] for row in result.fetchall()}
+
+    needs_recreate = bool(existing_cols) and ("lead_id" not in existing_cols)
+
+    if needs_recreate:
+        log.warning(
+            "⚠️  جدول messages موجود ببنية قديمة (بدون lead_id). "
+            "سيُحذف ويُعاد إنشاؤه."
+        )
+        await conn.execute(text("DROP TABLE IF EXISTS messages CASCADE"))
+
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS messages (
             id SERIAL PRIMARY KEY,
