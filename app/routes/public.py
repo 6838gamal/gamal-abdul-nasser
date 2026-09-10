@@ -47,89 +47,87 @@ async def about(request: Request):
                                                              "jsonld": [organization_jsonld()]})
 
 
-# ---------- المشاريع ----------
-@router.get("/projects")
-async def projects(request: Request, q: str | None = None, tag: str | None = None,
-                   db: AsyncSession = Depends(get_db)):
-    stmt = select(Project).where(Project.is_published == True).order_by(Project.created_at.desc())
-    if q:
-        like = f"%{q}%"
-        stmt = stmt.where(Project.title.ilike(like) | Project.short_description.ilike(like))
-    items = (await db.execute(stmt)).scalars().all()
-    if tag:
-        items = [p for p in items if tag in (p.tags or [])]
-    meta = base_meta("المشاريع", "تصفح أحدث المشاريع التقنية والإبداعية.", "/projects")
-    return templates.TemplateResponse("public/projects.html", {
-        "request": request, "meta": meta, "items": items, "q": q or "", "tag": tag or "",
-    })
-
-
-@router.get("/projects/{slug}")
-async def project_detail(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
-    p = (await db.execute(select(Project).where(Project.slug == slug,
-                                                 Project.is_published == True))).scalar_one_or_none()
-    if not p:
-        raise HTTPException(404)
-    meta = base_meta(p.meta_title or p.title, p.meta_description or p.short_description,
-                     f"/projects/{p.slug}", p.cover_image, og_type="article")
-    crumbs = breadcrumbs_jsonld([("الرئيسية", "/"), ("المشاريع", "/projects"), (p.title, f"/projects/{p.slug}")],
-                                 settings.APP_URL)
-    return templates.TemplateResponse("public/project_detail.html", {
-        "request": request, "meta": meta, "p": p, "jsonld": [crumbs],
-    })
-
-
-# ---------- الخدمات ----------
-@router.get("/services")
-async def services_list(request: Request, db: AsyncSession = Depends(get_db)):
-    items = (await db.execute(select(Service).where(Service.is_published == True)
-                              .order_by(Service.sort_order))).scalars().all()
-    meta = base_meta("الخدمات", "خدماتي الاحترافية للأفراد والشركات.", "/services")
-    return templates.TemplateResponse("public/services.html", {
+# ---------- AI Agent Development ----------
+@router.get("/ai-agent-development")
+async def ai_agent_development(request: Request, db: AsyncSession = Depends(get_db)):
+    items = (await db.execute(
+        select(Service).where(Service.is_published == True).order_by(Service.sort_order)
+    )).scalars().all()
+    meta = base_meta("تطوير وكلاء الذكاء الاصطناعي",
+                     "بناء وكلاء أذكياء مخصصين لأتمتة المهام المعقدة والتفاعل الذكي.", "/ai-agent-development")
+    return templates.TemplateResponse("public/ai_agent_development.html", {
         "request": request, "meta": meta, "items": items,
     })
 
 
-@router.get("/services/{slug}")
-async def service_detail(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
-    s = (await db.execute(select(Service).where(Service.slug == slug,
-                                                 Service.is_published == True))).scalar_one_or_none()
-    if not s:
-        raise HTTPException(404)
-    meta = base_meta(s.meta_title or s.title, s.meta_description or s.short_description,
-                     f"/services/{s.slug}", s.cover_image, "service")
-    return templates.TemplateResponse("public/service_detail.html", {
-        "request": request, "meta": meta, "s": s,
-    })
-
-
-# ---------- المنتجات ----------
-@router.get("/products")
-async def products_list(request: Request, db: AsyncSession = Depends(get_db)):
-    items = (await db.execute(select(Product).where(Product.is_published == True))).scalars().all()
-    meta = base_meta("المنتجات الرقمية", "منتجات رقمية جاهزة للتحميل الفوري.", "/products")
-    return templates.TemplateResponse("public/products.html", {
+# ---------- AI Automation ----------
+@router.get("/ai-automation")
+async def ai_automation(request: Request, db: AsyncSession = Depends(get_db)):
+    items = (await db.execute(
+        select(Service).where(Service.is_published == True).order_by(Service.sort_order)
+    )).scalars().all()
+    meta = base_meta("أتمتة الذكاء الاصطناعي",
+                     "أتمتة العمليات والسيناريوهات المتكررة باستخدام الذكاء الاصطناعي.", "/ai-automation")
+    return templates.TemplateResponse("public/ai_automation.html", {
         "request": request, "meta": meta, "items": items,
     })
 
 
-@router.get("/products/{slug}")
-async def product_detail(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
-    p = (await db.execute(select(Product).where(Product.slug == slug,
-                                                 Product.is_published == True))).scalar_one_or_none()
-    if not p:
-        raise HTTPException(404)
-    meta = base_meta(p.meta_title or p.title, p.meta_description or p.short_description,
-                     f"/products/{p.slug}", p.cover_image, og_type="product")
-    jsonld = [{
-        "@context": "https://schema.org", "@type": "Product",
-        "name": p.title, "description": p.short_description,
-        "image": settings.APP_URL + (p.cover_image or settings.DEFAULT_OG_IMAGE),
-        "offers": {"@type": "Offer", "price": str(p.price), "priceCurrency": p.currency,
-                   "availability": "https://schema.org/InStock"},
-    }]
-    return templates.TemplateResponse("public/product_detail.html", {
-        "request": request, "meta": meta, "p": p, "jsonld": jsonld,
+# ---------- Workflow Automation ----------
+@router.get("/workflow-automation")
+async def workflow_automation(request: Request, db: AsyncSession = Depends(get_db)):
+    items = (await db.execute(
+        select(Service).where(Service.is_published == True).order_by(Service.sort_order)
+    )).scalars().all()
+    meta = base_meta("أتمتة سير العمل",
+                     "ربط الأنظمة والأدوات وبناء تدفقات عمل ذكية بدون تدخل يدوي.", "/workflow-automation")
+    return templates.TemplateResponse("public/workflow_automation.html", {
+        "request": request, "meta": meta, "items": items,
+    })
+
+
+# ---------- WhatsApp AI Agent ----------
+@router.get("/whatsapp-ai-agent")
+async def whatsapp_ai_agent(request: Request):
+    meta = base_meta("وكيل واتساب الذكي",
+                     "وكيل ذكي يتفاعل مع عملائك على واتساب على مدار الساعة.", "/whatsapp-ai-agent")
+    return templates.TemplateResponse("public/whatsapp_ai_agent.html", {
+        "request": request, "meta": meta,
+    })
+
+
+# ---------- AI Assistant ----------
+@router.get("/ai-assistant")
+async def ai_assistant(request: Request):
+    meta = base_meta("المساعد الذكي",
+                     "مساعد ذكي مخصص لمساعدتك في المهام اليومية واتخاذ القرارات.", "/ai-assistant")
+    return templates.TemplateResponse("public/ai_assistant.html", {
+        "request": request, "meta": meta,
+    })
+
+
+# ---------- Document Intelligence ----------
+@router.get("/document-intelligence")
+async def document_intelligence(request: Request):
+    meta = base_meta("ذكاء المستندات",
+                     "استخراج وفهم وتحليل بيانات المستندات تلقائياً باستخدام الذكاء الاصطناعي.",
+                     "/document-intelligence")
+    return templates.TemplateResponse("public/document_intelligence.html", {
+        "request": request, "meta": meta,
+    })
+
+
+# ---------- Case Studies ----------
+@router.get("/case-studies")
+async def case_studies(request: Request, db: AsyncSession = Depends(get_db)):
+    items = (await db.execute(
+        select(Project).where(Project.is_published == True, Project.featured == True)
+        .order_by(Project.created_at.desc()).limit(12)
+    )).scalars().all()
+    meta = base_meta("دراسات الحالة",
+                     "قصص نجاح ومشاريع حقيقية مع النتائج والتأثير.", "/case-studies")
+    return templates.TemplateResponse("public/case_studies.html", {
+        "request": request, "meta": meta, "items": items,
     })
 
 
@@ -200,122 +198,8 @@ async def contact_post(request: Request,
                   ip_address=(request.client.host if request.client else None))
     db.add(msg)
     await db.commit()
-    # HTMX: نعيد جزء "شكراً"
     if request.headers.get("HX-Request"):
         return templates.TemplateResponse("partials/contact_thanks.html", {"request": request})
     meta = base_meta("شكراً", "تم استلام رسالتك.", "/contact")
     return templates.TemplateResponse("public/contact.html",
                                        {"request": request, "meta": meta, "sent": True})
-
-
-# =====================================================================
-# ---------- الحلول والخدمات الذكية (AI Solutions) ----------
-# =====================================================================
-
-# قائمة موحدة للحلول الذكية لتقليل التكرار
-AI_SOLUTIONS = {
-    "ai-agent-development": {
-        "title_ar": "تطوير وكلاء الذكاء الاصطناعي",
-        "title_en": "AI Agent Development",
-        "desc_ar": "بناء وكلاء أذكياء مخصصين لأتمتة المهام المعقدة والتفاعل الذكي مع المستخدمين.",
-        "desc_en": "Build custom AI agents to automate complex tasks and interact intelligently with users.",
-    },
-    "ai-automation": {
-        "title_ar": "أتمتة الذكاء الاصطناعي",
-        "title_en": "AI Automation",
-        "desc_ar": "أتمتة العمليات والسيناريوهات المتكررة باستخدام الذكاء الاصطناعي.",
-        "desc_en": "Automate repetitive processes and scenarios using artificial intelligence.",
-    },
-    "workflow-automation": {
-        "title_ar": "أتمتة سير العمل",
-        "title_en": "Workflow Automation",
-        "desc_ar": "ربط الأنظمة والأدوات وبناء تدفقات عمل ذكية بدون تدخل يدوي.",
-        "desc_en": "Connect systems and tools, and build smart workflows without manual intervention.",
-    },
-    "whatsapp-ai-agent": {
-        "title_ar": "وكيل واتساب الذكي",
-        "title_en": "WhatsApp AI Agent",
-        "desc_ar": "وكيل ذكي يتفاعل مع عملائك على واتساب على مدار الساعة.",
-        "desc_en": "An AI agent that engages your customers on WhatsApp around the clock.",
-    },
-    "ai-assistant": {
-        "title_ar": "المساعد الذكي",
-        "title_en": "AI Assistant",
-        "desc_ar": "مساعد ذكي مخصص لمساعدتك في المهام اليومية واتخاذ القرارات.",
-        "desc_en": "A personalized AI assistant to help you with daily tasks and decision-making.",
-    },
-    "document-intelligence": {
-        "title_ar": "ذكاء المستندات",
-        "title_en": "Document Intelligence",
-        "desc_ar": "استخراج وفهم وتحليل بيانات المستندات تلقائياً باستخدام الذكاء الاصطناعي.",
-        "desc_en": "Automatically extract, understand, and analyze document data using AI.",
-    },
-}
-
-
-@router.get("/ai-agent-development")
-async def ai_agent_development(request: Request):
-    s = AI_SOLUTIONS["ai-agent-development"]
-    meta = base_meta(s["title_ar"], s["desc_ar"], "/ai-agent-development")
-    return templates.TemplateResponse("public/solution.html", {
-        "request": request, "meta": meta, "solution": s, "slug": "ai-agent-development",
-    })
-
-
-@router.get("/ai-automation")
-async def ai_automation(request: Request):
-    s = AI_SOLUTIONS["ai-automation"]
-    meta = base_meta(s["title_ar"], s["desc_ar"], "/ai-automation")
-    return templates.TemplateResponse("public/solution.html", {
-        "request": request, "meta": meta, "solution": s, "slug": "ai-automation",
-    })
-
-
-@router.get("/workflow-automation")
-async def workflow_automation(request: Request):
-    s = AI_SOLUTIONS["workflow-automation"]
-    meta = base_meta(s["title_ar"], s["desc_ar"], "/workflow-automation")
-    return templates.TemplateResponse("public/solution.html", {
-        "request": request, "meta": meta, "solution": s, "slug": "workflow-automation",
-    })
-
-
-@router.get("/whatsapp-ai-agent")
-async def whatsapp_ai_agent(request: Request):
-    s = AI_SOLUTIONS["whatsapp-ai-agent"]
-    meta = base_meta(s["title_ar"], s["desc_ar"], "/whatsapp-ai-agent")
-    return templates.TemplateResponse("public/solution.html", {
-        "request": request, "meta": meta, "solution": s, "slug": "whatsapp-ai-agent",
-    })
-
-
-@router.get("/ai-assistant")
-async def ai_assistant(request: Request):
-    s = AI_SOLUTIONS["ai-assistant"]
-    meta = base_meta(s["title_ar"], s["desc_ar"], "/ai-assistant")
-    return templates.TemplateResponse("public/solution.html", {
-        "request": request, "meta": meta, "solution": s, "slug": "ai-assistant",
-    })
-
-
-@router.get("/document-intelligence")
-async def document_intelligence(request: Request):
-    s = AI_SOLUTIONS["document-intelligence"]
-    meta = base_meta(s["title_ar"], s["desc_ar"], "/document-intelligence")
-    return templates.TemplateResponse("public/solution.html", {
-        "request": request, "meta": meta, "solution": s, "slug": "document-intelligence",
-    })
-
-
-# ---------- دراسات الحالة ----------
-@router.get("/case-studies")
-async def case_studies(request: Request, db: AsyncSession = Depends(get_db)):
-    """صفحة دراسات الحالة — تعرض المشاريع المميزة كدراسات حالة."""
-    items = (await db.execute(
-        select(Project).where(Project.is_published == True, Project.featured == True)
-        .order_by(Project.created_at.desc()).limit(12)
-    )).scalars().all()
-    meta = base_meta("دراسات الحالة", "قصص نجاح ومشاريع حقيقية مع النتائج والتأثير.", "/case-studies")
-    return templates.TemplateResponse("public/case_studies.html", {
-        "request": request, "meta": meta, "items": items,
-    })
