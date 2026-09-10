@@ -1,0 +1,80 @@
+# ═══════════════════════════════════════════════════════════════════
+# Render Blueprint — Infrastructure as Code
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: gan-platform
+    runtime: python
+    region: oregon                # ⚠️ عدّلها حسب منطقتك: oregon / frankfurt / singapore / ohio
+    plan: starter                 # أو free
+    branch: main                  # فرعك
+    autoDeploy: true
+
+    # ─── البناء ────────────────────────────────────────────────
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+
+    # ─── التشغيل ───────────────────────────────────────────────
+    # ⚠️ هذا هو المهم: نشغّل init_db قبل uvicorn
+    # python scripts/init_db.py && uvicorn ...
+    startCommand: |
+      python scripts/init_db.py &&
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+
+    # ─── متغيرات البيئة ─────────────────────────────────────────
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gan-db
+          property: connectionString
+
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: GEMINI_API_KEY
+        sync: false                # تضعه يدوياً من Dashboard
+
+      - key: ADMIN_EMAIL
+        value: "admin@example.com" # ⚠️ عدّله
+
+      - key: ADMIN_PASSWORD
+        sync: false                # تضعه يدوياً
+
+      - key: SITE_AUTHOR
+        value: "جمال المقطري"
+
+      - key: SITE_DESCRIPTION
+        value: "هندسة البرمجيات وحلول الذكاء الاصطناعي والأتمتة"
+
+      - key: DEBUG
+        value: "false"
+
+    # ─── Health Check ───────────────────────────────────────────
+    healthCheckPath: /healthz
+
+    # ─── قرص ثابت (اختياري) ────────────────────────────────────
+    # disk:
+    #   name: uploads
+    #   mountPath: /var/uploads
+    #   sizeGB: 1
+
+
+# ═══════════════════════════════════════════════════════════════════
+# قاعدة البيانات
+# ═══════════════════════════════════════════════════════════════════
+
+databases:
+  - name: gan-db
+    databaseName: gan_platform
+    user: gan_user
+    plan: free                    # أو starter
+    region: oregon                # ⚠️ نفس منطقة Web Service
+    postgresMajorVersion: "16"
