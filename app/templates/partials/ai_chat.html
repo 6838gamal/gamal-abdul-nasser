@@ -29,10 +29,18 @@
       <div class="flex-1 min-w-0">
         <p class="font-bold text-sm leading-tight">وكيل جمال الذكي</p>
         <p class="text-xs text-white/80" x-text="statusMessage || 'متاح الآن · اسألني أي شيء'"></p>
+        {# شارة lead اختيارية #}
+        <template x-if="lead && lead.stage !== 'new'">
+          <p class="text-[10px] text-white/70 mt-0.5">
+            <span x-text="'المرحلة: ' + lead.stage"></span>
+            <span class="mx-1">·</span>
+            <span x-text="'النقاط: ' + lead.score + '/100'"></span>
+          </p>
+        </template>
       </div>
       <div class="flex gap-1">
-        <button 
-          @click="clearChat()" 
+        <button
+          @click="clearChat()"
           class="w-7 h-7 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
           title="مسح المحادثة"
           x-show="messages.length > 0"
@@ -41,8 +49,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
         </button>
-        <button 
-          @click="open=false" 
+        <button
+          @click="open=false"
           class="w-7 h-7 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
           aria-label="إغلاق"
         >
@@ -85,7 +93,7 @@
           <div
             :class="msg.role === 'user'
               ? 'bg-slate-100 text-slate-800 rounded-2xl rounded-tr-sm'
-              : msg.isError 
+              : msg.isError
                 ? 'bg-red-50 text-red-700 border border-red-200 rounded-2xl rounded-tl-sm'
                 : 'bg-gradient-to-br from-brand-500 to-brand-400 text-white rounded-2xl rounded-tl-sm shadow-sm'"
             class="max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed"
@@ -177,21 +185,25 @@ function aiChat() {
     userInput: '',
     loading: false,
     history: [],
+    lead: null,
     statusMessage: 'متاح الآن · اسألني أي شيء',
     connectionError: false,
     suggestions: ['ما هي خدماتك؟', 'كيف أتواصل معك؟', 'ما هي تخصصاتك التقنية؟'],
-    
+
     // ─── الإعدادات ────────────────────────────────────────────
     apiUrl: '/api/chat',
-    maxHistory: 30,
+    visitorUid: null,
     retryCount: 0,
     maxRetries: 2,
 
     // ─── التهيئة ──────────────────────────────────────────────
     init() {
+      // تهيئة visitor_uid أولاً (مهم جداً)
+      this.initVisitorUid();
+
       // استعادة المحادثة من localStorage
       this.loadChat();
-      
+
       // مراقبة حالة الفتح
       this.$watch('open', val => {
         if (val) {
@@ -208,6 +220,33 @@ function aiChat() {
       this.checkConnection();
     },
 
+    // ─── Visitor UID دائم ────────────────────────────────────
+    initVisitorUid() {
+      try {
+        let uid = localStorage.getItem('visitor_uid');
+
+        if (!uid || uid.length < 8) {
+          uid =
+            (window.crypto && crypto.randomUUID && crypto.randomUUID()) ||
+            'v-' +
+              Date.now().toString(36) +
+              '-' +
+              Math.random().toString(36).slice(2, 10);
+
+          localStorage.setItem('visitor_uid', uid);
+        }
+
+        this.visitorUid = uid;
+      } catch (e) {
+        console.warn('localStorage not available, using session UID:', e);
+        this.visitorUid =
+          'session-' +
+          Date.now().toString(36) +
+          '-' +
+          Math.random().toString(36).slice(2, 10);
+      }
+    },
+
     // ─── التحقق من الاتصال ──────────────────────────────────
     async checkConnection() {
       try {
@@ -216,8 +255,11 @@ function aiChat() {
           headers: { 'Content-Type': 'application/json' }
         });
         if (res.ok) {
+          const data = await res.json();
           this.connectionError = false;
-          this.statusMessage = '🟢 متاح الآن · اسألني أي شيء';
+          this.statusMessage = data.api_configured
+            ? '🟢 متاح الآن · اسألني أي شيء'
+            : '🟡 الخدمة قيد التهيئة';
         }
       } catch {
         this.connectionError = true;
@@ -232,7 +274,7 @@ function aiChat() {
         if (saved) {
           const data = JSON.parse(saved);
           this.messages = data.messages || [];
-          this.history = data.history || [];
+          this.lead = data.lead || null;
         }
       } catch (e) {
         console.warn('Failed to load chat history:', e);
@@ -241,10 +283,12 @@ function aiChat() {
 
     saveChat() {
       try {
-        localStorage.setItem('chat_history', JSON.stringify({
-          messages: this.messages,
-          history: this.history
-        }));
+        // نحفظ فقط آخر 50 رسالة لتجنب تضخم localStorage
+        const toSave = {
+          messages: this.messages.slice(-50),
+          lead: this.lead,
+        };
+        localStorage.setItem('chat_history', JSON.stringify(toSave));
       } catch (e) {
         console.warn('Failed to save chat history:', e);
       }
@@ -254,8 +298,13 @@ function aiChat() {
       if (this.messages.length === 0) return;
       if (confirm('هل أنت متأكد من مسح سجل المحادثة؟')) {
         this.messages = [];
-        this.history = [];
-        this.saveChat();
+        this.lead = null;
+        // لا نحذف visitor_uid
+        try {
+          localStorage.removeItem('chat_history');
+        } catch (e) {
+          console.warn(e);
+        }
         this.scrollBottom();
       }
     },
@@ -285,51 +334,54 @@ function aiChat() {
       const text = this.userInput.trim();
       if (!text || this.loading) return;
 
+      if (!this.visitorUid) {
+        this.initVisitorUid();
+      }
+
       // إضافة رسالة المستخدم
       this.messages.push({ role: 'user', content: text });
-      this.history.push({ role: 'user', content: text });
       this.userInput = '';
-      this.saveChat();
-      
+
       this.$nextTick(() => {
         if (this.$refs.input) {
           this.$refs.input.style.height = 'auto';
         }
       });
-      
+
       this.loading = true;
       this.scrollBottom();
 
       try {
-        // إرسال الطلب مع إعادة المحاولة
         const response = await this.sendWithRetry(text);
-        
+
         if (response.error) {
-          // عرض رسالة الخطأ للمستخدم
-          this.messages.push({ 
-            role: 'model', 
+          this.messages.push({
+            role: 'model',
             content: response.error,
-            isError: true 
+            isError: true
           });
           this.statusMessage = '⚠️ حدث خطأ في الاتصال';
         } else {
-          // رسالة نجاح
           const reply = response.reply || 'شكراً لسؤالك! كيف يمكنني مساعدتك بشكل أفضل؟';
           this.messages.push({ role: 'model', content: reply, isError: false });
-          this.history.push({ role: 'model', content: reply });
+
+          // تحديث lead snapshot إن وُجد
+          if (response.lead) {
+            this.lead = response.lead;
+          }
+
           this.statusMessage = '🟢 متاح الآن · اسألني أي شيء';
           this.connectionError = false;
         }
-        
+
         this.saveChat();
       } catch (error) {
         console.error('Chat error:', error);
-        // عرض رسالة خطأ للمستخدم
         const errorMsg = this.getErrorMessage(error);
-        this.messages.push({ 
-          role: 'model', 
+        this.messages.push({
+          role: 'model',
           content: errorMsg,
-          isError: true 
+          isError: true
         });
         this.statusMessage = '⚠️ حدث خطأ في الاتصال';
         this.connectionError = true;
@@ -342,46 +394,81 @@ function aiChat() {
 
     // ─── إعادة المحاولة ──────────────────────────────────────
     async sendWithRetry(text) {
-      const historyForApi = this.history.slice(0, -1);
-      
       for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
         try {
           const res = await fetch(this.apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              message: text, 
-              history: historyForApi 
+            body: JSON.stringify({
+              message: text,
+              visitor_uid: this.visitorUid,   // ✅ الحقل المطلوب
             }),
           });
 
-          const data = await res.json();
+          let data = null;
+          try {
+            data = await res.json();
+          } catch {
+            data = {};
+          }
 
-          // التحقق من استجابة API
+          // ─── الحالات الخاصة ───
+          if (res.status === 400) {
+            return {
+              error: data.reply || '⚠️ طلب غير صالح. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+            };
+          }
+
           if (res.status === 401 || res.status === 403) {
-            return { 
-              error: '⚠️ مفتاح API غير مفعل أو غير صحيح. يرجى التواصل مع المدير.' 
+            return {
+              error: '⚠️ مفتاح API غير مفعل أو غير صحيح. يرجى التواصل مع المدير.'
+            };
+          }
+
+          if (res.status === 422) {
+            console.error('Validation error:', data);
+            // محاولة استخراج رسالة الخطأ من FastAPI
+            const detail = data?.detail;
+            const msg = Array.isArray(detail)
+              ? detail.map(d => d.msg).join(', ')
+              : (detail || 'طلب غير صالح');
+            return {
+              error: '⚠️ ' + msg
             };
           }
 
           if (res.status === 429) {
-            return { 
-              error: '⚠️ تم تجاوز حد الاستخدام. يرجى المحاولة بعد قليل.' 
+            return {
+              error: '⚠️ تم تجاوز حد الاستخدام. يرجى المحاولة بعد قليل.'
             };
           }
 
-          if (res.status === 500 || !data.reply) {
+          if (res.status >= 500) {
             if (attempt < this.maxRetries) {
               await this.delay(1000 * (attempt + 1));
               continue;
             }
-            return { 
-              error: data.reply || '⚠️ حدث خطأ في الخادم. يرجى المحاولة مرة أخرى.' 
+            return {
+              error: data.reply || '⚠️ حدث خطأ في الخادم. يرجى المحاولة مرة أخرى.'
             };
           }
 
-          // نجاح
-          return { reply: data.reply };
+          // ─── نجاح ───
+          if (data.reply) {
+            return {
+              reply: data.reply,
+              lead: data.lead || null,
+            };
+          }
+
+          if (attempt < this.maxRetries) {
+            await this.delay(1000 * (attempt + 1));
+            continue;
+          }
+
+          return {
+            error: '⚠️ لم يصل رد من الخادم. يرجى المحاولة مرة أخرى.'
+          };
 
         } catch (error) {
           if (attempt < this.maxRetries) {
@@ -391,7 +478,7 @@ function aiChat() {
           throw error;
         }
       }
-      
+
       return { error: '⚠️ فشل الاتصال بعد عدة محاولات. يرجى التحقق من اتصالك بالإنترنت.' };
     },
 
