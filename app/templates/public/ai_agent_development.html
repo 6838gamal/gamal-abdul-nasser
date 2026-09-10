@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="container mx-auto max-w-6xl px-4 py-16">
+
+  <!-- Hero -->
+  <div class="text-center max-w-3xl mx-auto mb-16">
+    <span class="inline-block px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-semibold mb-4">
+      {{ t('nav.ai_agent_development') }}
+    </span>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-5">
+      {% if locale() == 'ar' %}وكلاء ذكاء اصطناعي يعملون نيابة عنك{% else %}AI Agents That Work For You{% endif %}
+    </h1>
+    <p class="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+      {% if locale() == 'ar' %}
+        نصمم ونبني وكلاء ذكاء اصطناعي مخصصين قادرين على اتخاذ القرارات، تنفيذ المهام المعقدة، والتفاعل الذكي مع عملائك على مدار الساعة.
+      {% else %}
+        We design and build custom AI agents capable of decision-making, executing complex tasks, and intelligently interacting with your customers around the clock.
+      {% endif %}
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3 justify-center">
+      <a href="/contact" class="px-6 py-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold transition-colors shadow-sm">
+        {{ t('nav.contact') }}
+      </a>
+      <a href="/case-studies" class="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-400 font-semibold transition-colors">
+        {{ t('nav.case_studies') }}
+      </a>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="grid md:grid-cols-3 gap-6 mb-16">
+    {% set features = [
+      {'icon': 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+       'title_ar': 'تفكير واستدلال', 'title_en': 'Reasoning & Thinking',
+       'desc_ar': 'وكلاء قادرون على التفكير المنطقي واتخاذ القرارات بناءً على السياق.', 'desc_en': 'Agents capable of logical reasoning and context-based decision-making.'},
+      {'icon': 'M13 10V3L4 14h7v7l9-11h-7z',
+       'title_ar': 'تنفيذ المهام', 'title_en': 'Task Execution',
+       'desc_ar': 'ربط الوكلاء بالأدوات وواجهات API لتنفيذ مهام حقيقية.', 'desc_en': 'Connect agents to tools and APIs to execute real-world tasks.'},
+      {'icon': 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+       'title_ar': 'تعدد الوكلاء', 'title_en': 'Multi-Agent',
+       'desc_ar': 'أنظمة متعددة الوكلاء تتعاون لحل مشكلات معقدة.', 'desc_en': 'Multi-agent systems collaborating to solve complex problems.'}
+    ] %}
+    {% for f in features %}
+    <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 transition-colors">
+      <div class="size-11 rounded-xl bg-brand-500/10 grid place-items-center mb-4">
+        <svg class="size-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ f.icon }}"/></svg>
+      </div>
+      <h3 class="font-display font-bold text-slate-900 dark:text-white mb-2">{{ f.title_ar if locale() == 'ar' else f.title_en }}</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{{ f.desc_ar if locale() == 'ar' else f.desc_en }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Process -->
+  <div class="mb-16">
+    <h2 class="font-display text-2xl md:text-3xl font-bold text-slate-900 dark:text-white text-center mb-10">
+      {% if locale() == 'ar' %}منهجية العمل{% else %}Our Process{% endif %}
+    </h2>
+    <div class="grid md:grid-cols-4 gap-5">
+      {% set steps = [
+        {'n': '01', 'ar': 'التحليل', 'en': 'Discovery', 'dar': 'فهم احتياجك وأهداف العمل.', 'den': 'Understanding your needs and business goals.'},
+        {'n': '02', 'ar': 'التصميم', 'en': 'Design', 'dar': 'تصميم بنية الوكيل وسيناريوهات الاستخدام.', 'den': 'Designing agent architecture and use cases.'},
+        {'n': '03', 'ar': 'التطوير', 'en': 'Development', 'dar': 'بناء الوكيل وربطه بالأدوات والبيانات.', 'den': 'Building the agent and connecting tools & data.'},
+        {'n': '04', 'ar': 'الإطلاق', 'en': 'Deploy', 'dar': 'الاختبار، النشر، والمتابعة المستمرة.', 'den': 'Testing, deployment, and continuous monitoring.'}
+      ] %}
+      {% for s in steps %}
+      <div class="relative p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+        <span class="font-display text-3xl font-bold text-brand-500/30">{{ s.n }}</span>
+        <h3 class="font-display font-bold text-slate-900 dark:text-white mt-2 mb-1">{{ s.ar if locale() == 'ar' else s.en }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ s.dar if locale() == 'ar' else s.den }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="rounded-3xl bg-gradient-to-br from-brand-500 to-brand-600 p-10 text-center text-white">
+    <h2 class="font-display text-2xl md:text-3xl font-bold mb-3">
+      {% if locale() == 'ar' %}جاهز لبناء وكيلك الذكي؟{% else %}Ready to build your AI agent?{% endif %}
+    </h2>
+    <p class="text-white/80 mb-6 max-w-xl mx-auto">
+      {% if locale() == 'ar' %}احجز استشارة مجانية لمناقشة مشروعك.{% else %}Book a free consultation to discuss your project.{% endif %}
+    </p>
+    <a href="/contact" class="inline-block px-8 py-3 rounded-lg bg-white text-brand-600 font-bold hover:bg-slate-100 transition-colors">
+      {{ t('nav.contact') }}
+    </a>
+  </div>
+
+</section>
+{% endblock %}
