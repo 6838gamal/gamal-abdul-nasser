@@ -206,3 +206,116 @@ async def contact_post(request: Request,
     meta = base_meta("شكراً", "تم استلام رسالتك.", "/contact")
     return templates.TemplateResponse("public/contact.html",
                                        {"request": request, "meta": meta, "sent": True})
+
+
+# =====================================================================
+# ---------- الحلول والخدمات الذكية (AI Solutions) ----------
+# =====================================================================
+
+# قائمة موحدة للحلول الذكية لتقليل التكرار
+AI_SOLUTIONS = {
+    "ai-agent-development": {
+        "title_ar": "تطوير وكلاء الذكاء الاصطناعي",
+        "title_en": "AI Agent Development",
+        "desc_ar": "بناء وكلاء أذكياء مخصصين لأتمتة المهام المعقدة والتفاعل الذكي مع المستخدمين.",
+        "desc_en": "Build custom AI agents to automate complex tasks and interact intelligently with users.",
+    },
+    "ai-automation": {
+        "title_ar": "أتمتة الذكاء الاصطناعي",
+        "title_en": "AI Automation",
+        "desc_ar": "أتمتة العمليات والسيناريوهات المتكررة باستخدام الذكاء الاصطناعي.",
+        "desc_en": "Automate repetitive processes and scenarios using artificial intelligence.",
+    },
+    "workflow-automation": {
+        "title_ar": "أتمتة سير العمل",
+        "title_en": "Workflow Automation",
+        "desc_ar": "ربط الأنظمة والأدوات وبناء تدفقات عمل ذكية بدون تدخل يدوي.",
+        "desc_en": "Connect systems and tools, and build smart workflows without manual intervention.",
+    },
+    "whatsapp-ai-agent": {
+        "title_ar": "وكيل واتساب الذكي",
+        "title_en": "WhatsApp AI Agent",
+        "desc_ar": "وكيل ذكي يتفاعل مع عملائك على واتساب على مدار الساعة.",
+        "desc_en": "An AI agent that engages your customers on WhatsApp around the clock.",
+    },
+    "ai-assistant": {
+        "title_ar": "المساعد الذكي",
+        "title_en": "AI Assistant",
+        "desc_ar": "مساعد ذكي مخصص لمساعدتك في المهام اليومية واتخاذ القرارات.",
+        "desc_en": "A personalized AI assistant to help you with daily tasks and decision-making.",
+    },
+    "document-intelligence": {
+        "title_ar": "ذكاء المستندات",
+        "title_en": "Document Intelligence",
+        "desc_ar": "استخراج وفهم وتحليل بيانات المستندات تلقائياً باستخدام الذكاء الاصطناعي.",
+        "desc_en": "Automatically extract, understand, and analyze document data using AI.",
+    },
+}
+
+
+@router.get("/ai-agent-development")
+async def ai_agent_development(request: Request):
+    s = AI_SOLUTIONS["ai-agent-development"]
+    meta = base_meta(s["title_ar"], s["desc_ar"], "/ai-agent-development")
+    return templates.TemplateResponse("public/solution.html", {
+        "request": request, "meta": meta, "solution": s, "slug": "ai-agent-development",
+    })
+
+
+@router.get("/ai-automation")
+async def ai_automation(request: Request):
+    s = AI_SOLUTIONS["ai-automation"]
+    meta = base_meta(s["title_ar"], s["desc_ar"], "/ai-automation")
+    return templates.TemplateResponse("public/solution.html", {
+        "request": request, "meta": meta, "solution": s, "slug": "ai-automation",
+    })
+
+
+@router.get("/workflow-automation")
+async def workflow_automation(request: Request):
+    s = AI_SOLUTIONS["workflow-automation"]
+    meta = base_meta(s["title_ar"], s["desc_ar"], "/workflow-automation")
+    return templates.TemplateResponse("public/solution.html", {
+        "request": request, "meta": meta, "solution": s, "slug": "workflow-automation",
+    })
+
+
+@router.get("/whatsapp-ai-agent")
+async def whatsapp_ai_agent(request: Request):
+    s = AI_SOLUTIONS["whatsapp-ai-agent"]
+    meta = base_meta(s["title_ar"], s["desc_ar"], "/whatsapp-ai-agent")
+    return templates.TemplateResponse("public/solution.html", {
+        "request": request, "meta": meta, "solution": s, "slug": "whatsapp-ai-agent",
+    })
+
+
+@router.get("/ai-assistant")
+async def ai_assistant(request: Request):
+    s = AI_SOLUTIONS["ai-assistant"]
+    meta = base_meta(s["title_ar"], s["desc_ar"], "/ai-assistant")
+    return templates.TemplateResponse("public/solution.html", {
+        "request": request, "meta": meta, "solution": s, "slug": "ai-assistant",
+    })
+
+
+@router.get("/document-intelligence")
+async def document_intelligence(request: Request):
+    s = AI_SOLUTIONS["document-intelligence"]
+    meta = base_meta(s["title_ar"], s["desc_ar"], "/document-intelligence")
+    return templates.TemplateResponse("public/solution.html", {
+        "request": request, "meta": meta, "solution": s, "slug": "document-intelligence",
+    })
+
+
+# ---------- دراسات الحالة ----------
+@router.get("/case-studies")
+async def case_studies(request: Request, db: AsyncSession = Depends(get_db)):
+    """صفحة دراسات الحالة — تعرض المشاريع المميزة كدراسات حالة."""
+    items = (await db.execute(
+        select(Project).where(Project.is_published == True, Project.featured == True)
+        .order_by(Project.created_at.desc()).limit(12)
+    )).scalars().all()
+    meta = base_meta("دراسات الحالة", "قصص نجاح ومشاريع حقيقية مع النتائج والتأثير.", "/case-studies")
+    return templates.TemplateResponse("public/case_studies.html", {
+        "request": request, "meta": meta, "items": items,
+    })
