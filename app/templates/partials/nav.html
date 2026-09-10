@@ -5,12 +5,13 @@
       <span class="font-display font-bold text-lg text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">{{ site.name }}</span>
     </a>
     <ul class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300">
-      <li><a href="/" class="hover:text-brand-500 transition-colors">{{ t('nav.home') }}</a></li>
-      <li><a href="/about" class="hover:text-brand-500 transition-colors">{{ t('nav.about') }}</a></li>
-      <li><a href="/projects" class="hover:text-brand-500 transition-colors">{{ t('nav.projects') }}</a></li>
-      <li><a href="/services" class="hover:text-brand-500 transition-colors">{{ t('nav.services') }}</a></li>
-      <li><a href="/products" class="hover:text-brand-500 transition-colors">{{ t('nav.products') }}</a></li>
-      <li><a href="/blog" class="hover:text-brand-500 transition-colors">{{ t('nav.blog') }}</a></li>
+      <li><a href="/ai-agent-development" class="hover:text-brand-500 transition-colors">AI Agent Development</a></li>
+      <li><a href="/ai-automation" class="hover:text-brand-500 transition-colors">AI Automation</a></li>
+      <li><a href="/workflow-automation" class="hover:text-brand-500 transition-colors">Workflow Automation</a></li>
+      <li><a href="/whatsapp-ai-agent" class="hover:text-brand-500 transition-colors">WhatsApp AI Agent</a></li>
+      <li><a href="/ai-assistant" class="hover:text-brand-500 transition-colors">AI Assistant</a></li>
+      <li><a href="/document-intelligence" class="hover:text-brand-500 transition-colors">Document Intelligence</a></li>
+      <li><a href="/case-studies" class="hover:text-brand-500 transition-colors">Case Studies</a></li>
       <li>
         <a href="/set-lang/{{ 'en' if locale() == 'ar' else 'ar' }}"
            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-brand-500 hover:border-brand-300 transition-colors text-xs font-semibold">
@@ -43,12 +44,13 @@
   </nav>
   <div x-show="menu" x-transition class="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
     <ul class="px-4 py-3 space-y-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-      <li><a href="/" class="block py-2 hover:text-brand-500">{{ t('nav.home') }}</a></li>
-      <li><a href="/about" class="block py-2 hover:text-brand-500">{{ t('nav.about') }}</a></li>
-      <li><a href="/projects" class="block py-2 hover:text-brand-500">{{ t('nav.projects') }}</a></li>
-      <li><a href="/services" class="block py-2 hover:text-brand-500">{{ t('nav.services') }}</a></li>
-      <li><a href="/products" class="block py-2 hover:text-brand-500">{{ t('nav.products') }}</a></li>
-      <li><a href="/blog" class="block py-2 hover:text-brand-500">{{ t('nav.blog') }}</a></li>
+      <li><a href="/ai-agent-development" class="block py-2 hover:text-brand-500">AI Agent Development</a></li>
+      <li><a href="/ai-automation" class="block py-2 hover:text-brand-500">AI Automation</a></li>
+      <li><a href="/workflow-automation" class="block py-2 hover:text-brand-500">Workflow Automation</a></li>
+      <li><a href="/whatsapp-ai-agent" class="block py-2 hover:text-brand-500">WhatsApp AI Agent</a></li>
+      <li><a href="/ai-assistant" class="block py-2 hover:text-brand-500">AI Assistant</a></li>
+      <li><a href="/document-intelligence" class="block py-2 hover:text-brand-500">Document Intelligence</a></li>
+      <li><a href="/case-studies" class="block py-2 hover:text-brand-500">Case Studies</a></li>
       <li><a href="/contact" class="block py-2 text-brand-500 font-semibold">{{ t('nav.contact') }}</a></li>
     </ul>
   </div>
