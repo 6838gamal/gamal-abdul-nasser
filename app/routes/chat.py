@@ -14,8 +14,8 @@
 - معالجة أخطاء Gemini
 """
 
-import html
 import logging
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request, status
@@ -71,9 +71,6 @@ MIN_VISITOR_UID_LENGTH = 8
 class ChatRequest(BaseModel):
     """
     طلب المحادثة.
-
-    visitor_uid: UUID دائم من الفرونت (localStorage).
-    message: رسالة المستخدم الحالية.
     """
 
     message: str = Field(
@@ -93,97 +90,34 @@ class ChatRequest(BaseModel):
 class LeadSnapshot(BaseModel):
     """
     لقطة من حالة العميل المحتمل.
-    تُعاد للفرونت لعرض الحالة أو التتبع.
     """
 
-    stage: str = Field(
-        default="new",
-        description="مرحلة العميل في الـ funnel",
-    )
+    stage: str = Field(default="new")
+    score: int = Field(default=0)
+    score_label: str = Field(default="cold")
 
-    score: int = Field(
-        default=0,
-        description="نقاط العميل (0-100)",
-    )
+    name: Optional[str] = None
+    company: Optional[str] = None
+    contact: Optional[str] = None
+    project_type: Optional[str] = None
+    problem: Optional[str] = None
+    desired_solution: Optional[str] = None
+    budget: Optional[str] = None
+    timeline: Optional[str] = None
 
-    score_label: str = Field(
-        default="cold",
-        description="تصنيف العميل: hot / warm / cold",
-    )
-
-    name: Optional[str] = Field(
-        default=None,
-        description="اسم العميل",
-    )
-
-    company: Optional[str] = Field(
-        default=None,
-        description="اسم الشركة",
-    )
-
-    contact: Optional[str] = Field(
-        default=None,
-        description="بيانات التواصل",
-    )
-
-    project_type: Optional[str] = Field(
-        default=None,
-        description="نوع المشروع",
-    )
-
-    problem: Optional[str] = Field(
-        default=None,
-        description="المشكلة أو الألم",
-    )
-
-    desired_solution: Optional[str] = Field(
-        default=None,
-        description="الحل المطلوب",
-    )
-
-    budget: Optional[str] = Field(
-        default=None,
-        description="الميزانية إن ذكرت",
-    )
-
-    timeline: Optional[str] = Field(
-        default=None,
-        description="الجدول الزمني إن ذكر",
-    )
-
-    next_action: Optional[str] = Field(
-        default=None,
-        description="الإجراء التالي المقترح",
-    )
+    intent: Optional[str] = None
+    next_action: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
     """
     استجابة الـ API.
-
-    reply: الحقل الأساسي الذي تستخدمه واجهة الدردشة.
-    lead: لقطة اختيارية لحالة العميل.
     """
 
-    reply: str = Field(
-        ...,
-        description="رد الوكيل",
-    )
-
-    status: str = Field(
-        default="success",
-        description="حالة الطلب",
-    )
-
-    error_code: Optional[str] = Field(
-        default=None,
-        description="رمز الخطأ إن وجد",
-    )
-
-    lead: Optional[LeadSnapshot] = Field(
-        default=None,
-        description="حالة العميل المحتمل",
-    )
+    reply: str = Field(..., description="رد الوكيل")
+    status: str = Field(default="success")
+    error_code: Optional[str] = Field(default=None)
+    lead: Optional[LeadSnapshot] = Field(default=None)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -193,15 +127,26 @@ class ChatResponse(BaseModel):
 
 def sanitize_text(text: str) -> str:
     """
-    تنقية النص من HTML والحد من الطول.
+    تنقية النص — إزالة وسوم HTML فقط، بدون تحويل الرموز.
+
+    ملاحظة:
+    - لا نستخدم html.escape لأنه يحول " إلى &quot; ويشوّه الرسائل.
+    - الفرونت يستخدم textContent الذي يُشفّر تلقائياً عند العرض.
     """
 
     if not text:
         return ""
 
-    cleaned = html.escape(str(text).strip())
+    # أزل وسوم HTML فعلياً (بدون تحويل الرموز)
+    cleaned = re.sub(r"<[^>]*>", "", str(text))
 
-    return cleaned[:MAX_MESSAGE_LENGTH]
+    # أزل أحرف التحكم غير المرئية مع الإبقاء على \n و \t
+    cleaned = "".join(
+        c for c in cleaned
+        if c in ("\n", "\t", "\r") or ord(c) >= 32
+    )
+
+    return cleaned.strip()[:MAX_MESSAGE_LENGTH]
 
 
 def clean_visitor_uid(uid: str) -> str:
@@ -223,7 +168,6 @@ def get_client_ip(request: Request) -> str:
     if request.client and request.client.host:
         return request.client.host
 
-    # محاولة X-Forwarded-For
     forwarded = request.headers.get("x-forwarded-for", "")
 
     if forwarded:
@@ -260,6 +204,7 @@ def snapshot_from_lead(lead) -> LeadSnapshot:
         desired_solution=lead.desired_solution,
         budget=lead.budget,
         timeline=lead.timeline,
+        intent=lead.intent,
         next_action=lead.next_action,
     )
 
@@ -269,39 +214,28 @@ def snapshot_from_lead(lead) -> LeadSnapshot:
 # ══════════════════════════════════════════════════════════════════════
 
 
-def get_error_message(
-    error: Exception,
-) -> tuple[str, str]:
+def get_error_message(error: Exception) -> tuple[str, str]:
     """
     تحويل الاستثناء إلى رسالة مناسبة للمستخدم.
     """
 
     error_str = str(error)
 
-    if (
-        "GEMINI_API_KEY_NOT_CONFIGURED"
-        in error_str
-    ):
+    if "GEMINI_API_KEY_NOT_CONFIGURED" in error_str:
         return (
             "⚠️ مفتاح Gemini API غير مفعل حالياً. "
             "يرجى التواصل مع المدير لتفعيل الخدمة.",
             "API_KEY_NOT_CONFIGURED",
         )
 
-    if (
-        "GEMINI_API_KEY_INVALID"
-        in error_str
-    ):
+    if "GEMINI_API_KEY_INVALID" in error_str:
         return (
             "⚠️ مفتاح Gemini API غير صحيح أو منتهي الصلاحية. "
             "يرجى التواصل مع المدير.",
             "API_KEY_INVALID",
         )
 
-    if (
-        "RATE_LIMIT_EXCEEDED"
-        in error_str
-    ):
+    if "RATE_LIMIT_EXCEEDED" in error_str:
         return (
             "⚠️ تم تجاوز حد استخدام خدمة الذكاء الاصطناعي. "
             "يرجى المحاولة بعد قليل.",
@@ -309,17 +243,13 @@ def get_error_message(
         )
 
     if "TIMEOUT" in error_str:
-
         return (
             "⏱️ انتهت مهلة الاتصال بخادم الذكاء الاصطناعي. "
             "يرجى المحاولة مرة أخرى.",
             "TIMEOUT",
         )
 
-    if (
-        "CONNECTION_ERROR"
-        in error_str
-    ):
+    if "CONNECTION_ERROR" in error_str:
         return (
             "⚠️ تعذر الاتصال بخدمة الذكاء الاصطناعي حالياً. "
             "يرجى المحاولة مرة أخرى.",
@@ -327,14 +257,10 @@ def get_error_message(
         )
 
     if (
-        "HTTP_ERROR_500"
-        in error_str
-        or "HTTP_ERROR_502"
-        in error_str
-        or "HTTP_ERROR_503"
-        in error_str
-        or "HTTP_ERROR_504"
-        in error_str
+        "HTTP_ERROR_500" in error_str
+        or "HTTP_ERROR_502" in error_str
+        or "HTTP_ERROR_503" in error_str
+        or "HTTP_ERROR_504" in error_str
     ):
         return (
             "⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً. "
@@ -342,33 +268,23 @@ def get_error_message(
             "SERVICE_UNAVAILABLE",
         )
 
-    if (
-        "EMPTY_GEMINI_RESPONSE"
-        in error_str
-    ):
+    if "EMPTY_GEMINI_RESPONSE" in error_str:
         return (
             "⚠️ لم يتم الحصول على رد من نموذج الذكاء الاصطناعي. "
             "يرجى المحاولة مرة أخرى.",
             "EMPTY_RESPONSE",
         )
 
-    if (
-        "INVALID_GEMINI_RESPONSE"
-        in error_str
-    ):
+    if "INVALID_GEMINI_RESPONSE" in error_str:
         return (
             "⚠️ حدثت مشكلة في معالجة استجابة الذكاء الاصطناعي. "
             "يرجى المحاولة مرة أخرى.",
             "INVALID_RESPONSE",
         )
 
-    if (
-        "INVALID_VISITOR_UID"
-        in error_str
-    ):
+    if "INVALID_VISITOR_UID" in error_str:
         return (
-            "⚠️ معرّف الزائر غير صالح. "
-            "يرجى تحديث الصفحة.",
+            "⚠️ معرّف الزائر غير صالح. يرجى تحديث الصفحة.",
             "INVALID_VISITOR_UID",
         )
 
@@ -445,14 +361,6 @@ async def chat_endpoint(
 ):
     """
     نقطة نهاية المحادثة مع AI Sales Agent.
-
-    الخطوات:
-    1. تنظيف المدخلات.
-    2. إنشاء/جلب Visitor دائم.
-    3. إنشاء/جلب Lead.
-    4. تشغيل Agent Loop (مع tools).
-    5. حفظ كل الرسائل والأدوات.
-    6. إرجاع الرد + لقطة Lead.
     """
 
     # ══════════════════════════════════════
@@ -462,7 +370,6 @@ async def chat_endpoint(
     clean_message = sanitize_text(req.message)
 
     if not clean_message:
-
         return error_json(
             "يرجى كتابة رسالتك أولاً حتى أتمكن من مساعدتك.",
             "EMPTY_MESSAGE",
@@ -476,7 +383,6 @@ async def chat_endpoint(
     visitor_uid = clean_visitor_uid(req.visitor_uid)
 
     if len(visitor_uid) < MIN_VISITOR_UID_LENGTH:
-
         return error_json(
             "معرّف الزائر غير صالح.",
             "INVALID_VISITOR_UID",
@@ -488,28 +394,17 @@ async def chat_endpoint(
     # ══════════════════════════════════════
 
     try:
-
         visitor = await get_or_create_visitor(
             db,
             visitor_uid,
             ip=get_client_ip(request),
-            user_agent=request.headers.get(
-                "user-agent", ""
-            ),
-            locale=request.headers.get(
-                "accept-language", ""
-            )[:16],
-            referrer=request.headers.get(
-                "referer", ""
-            ),
+            user_agent=request.headers.get("user-agent", ""),
+            locale=request.headers.get("accept-language", "")[:16],
+            referrer=request.headers.get("referer", ""),
         )
 
     except ValueError as e:
-
-        log.warning(
-            "Invalid visitor uid: %s", e
-        )
-
+        log.warning("Invalid visitor uid: %s", e)
         return error_json(
             "معرّف الزائر غير صالح.",
             "INVALID_VISITOR_UID",
@@ -521,17 +416,10 @@ async def chat_endpoint(
     # ══════════════════════════════════════
 
     try:
-
-        lead = await get_or_create_lead_for_visitor(
-            db, visitor
-        )
+        lead = await get_or_create_lead_for_visitor(db, visitor)
 
     except Exception as e:
-
-        log.exception(
-            "Failed to get/create lead: %s", e
-        )
-
+        log.exception("Failed to get/create lead: %s", e)
         return error_json(
             "⚠️ حدث خطأ في تهيئة المحادثة.",
             "LEAD_INIT_FAILED",
@@ -550,7 +438,6 @@ async def chat_endpoint(
     # ══════════════════════════════════════
 
     try:
-
         reply = await run_agent(
             db=db,
             lead=lead,
@@ -560,15 +447,8 @@ async def chat_endpoint(
         # إعادة تحميل lead بعد التحديثات
         await db.refresh(lead)
 
-        # ══════════════════════════════════
-        # Sales Logging
-        # ══════════════════════════════════
-
         log.info(
-            (
-                "Agent reply | visitor=%s lead=%s "
-                "stage=%s score=%s reply='%s'"
-            ),
+            "Agent reply | visitor=%s lead=%s stage=%s score=%s reply='%s'",
             visitor.visitor_uid,
             lead.id,
             lead.stage.value if lead.stage else "?",
@@ -576,92 +456,48 @@ async def chat_endpoint(
             reply[:80],
         )
 
-        # ══════════════════════════════════
-        # API Response
-        # ══════════════════════════════════
-
         return ChatResponse(
             reply=reply,
             status="success",
             lead=snapshot_from_lead(lead),
         )
 
-    # ══════════════════════════════════════
-    # Configuration Errors (ValueError)
-    # ══════════════════════════════════════
-
+    # ── Configuration Errors ───────────────
     except ValueError as e:
-
         error_msg, error_code = get_error_message(e)
-
-        log.warning(
-            "Configuration error: %s - %s",
-            error_code,
-            e,
-        )
-
+        log.warning("Configuration error: %s - %s", error_code, e)
         return error_json(
             error_msg,
             error_code,
             status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
-    # ══════════════════════════════════════
-    # Runtime Errors
-    # ══════════════════════════════════════
-
+    # ── Runtime Errors ─────────────────────
     except RuntimeError as e:
-
         error_msg, error_code = get_error_message(e)
-
-        log.error(
-            "Runtime error: %s - %s",
-            error_code,
-            e,
-        )
+        log.error("Runtime error: %s - %s", error_code, e)
 
         if error_code == "RATE_LIMIT":
-
-            http_status = (
-                status.HTTP_429_TOO_MANY_REQUESTS
-            )
-
+            http_status = status.HTTP_429_TOO_MANY_REQUESTS
         elif error_code in {
             "TIMEOUT",
             "CONNECTION_ERROR",
             "SERVICE_UNAVAILABLE",
         }:
-
-            http_status = (
-                status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-
+            http_status = status.HTTP_503_SERVICE_UNAVAILABLE
         else:
+            http_status = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-            http_status = (
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return error_json(error_msg, error_code, http_status)
 
-        return error_json(
-            error_msg,
-            error_code,
-            http_status,
-        )
-
-    # ══════════════════════════════════
-    # Unexpected Errors
-    # ══════════════════════════════════
-
+    # ── Unexpected Errors ──────────────────
     except Exception as e:
-
         error_msg, error_code = get_error_message(e)
-
         log.exception(
             "Unexpected Sales Agent error: %s - %s",
             error_code,
             e,
         )
-
         return error_json(
             error_msg,
             error_code,
