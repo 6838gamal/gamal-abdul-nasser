@@ -26,6 +26,7 @@ def get_dir() -> str:
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "ar": {
+        # القائمة الرئيسية
         "nav.home": "الرئيسية",
         "nav.about": "من أنا",
         "nav.projects": "المشاريع",
@@ -33,6 +34,17 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav.products": "المنتجات",
         "nav.blog": "المدونة",
         "nav.contact": "احجز استشارة",
+
+        # عناصر القائمة الجديدة
+        "nav.ai_agent_development": "تطوير وكلاء الذكاء الاصطناعي",
+        "nav.ai_automation": "أتمتة الذكاء الاصطناعي",
+        "nav.workflow_automation": "أتمتة سير العمل",
+        "nav.whatsapp_ai_agent": "وكيل واتساب الذكي",
+        "nav.ai_assistant": "المساعد الذكي",
+        "nav.document_intelligence": "ذكاء المستندات",
+        "nav.case_studies": "دراسات الحالة",
+
+        # التذييل
         "footer.links": "روابط",
         "footer.other": "أخرى",
         "footer.about": "من أنا",
@@ -42,14 +54,19 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "footer.contact": "التواصل",
         "footer.consult": "احجز استشارة",
         "footer.rights": "جميع الحقوق محفوظة",
+
+        # عام
         "theme.toggle": "تبديل الوضع الليلي/النهاري",
         "lang.toggle": "English",
+
+        # الإدارة
         "admin.login_title": "دخول الإدارة",
         "admin.email": "البريد الإلكتروني",
         "admin.password": "كلمة المرور",
         "admin.submit": "دخول",
     },
     "en": {
+        # Main navigation
         "nav.home": "Home",
         "nav.about": "About",
         "nav.projects": "Projects",
@@ -57,6 +74,17 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav.products": "Products",
         "nav.blog": "Blog",
         "nav.contact": "Book a Consultation",
+
+        # New navigation items
+        "nav.ai_agent_development": "AI Agent Development",
+        "nav.ai_automation": "AI Automation",
+        "nav.workflow_automation": "Workflow Automation",
+        "nav.whatsapp_ai_agent": "WhatsApp AI Agent",
+        "nav.ai_assistant": "AI Assistant",
+        "nav.document_intelligence": "Document Intelligence",
+        "nav.case_studies": "Case Studies",
+
+        # Footer
         "footer.links": "Links",
         "footer.other": "Other",
         "footer.about": "About",
@@ -66,8 +94,12 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "footer.contact": "Contact",
         "footer.consult": "Book a Consultation",
         "footer.rights": "All rights reserved",
+
+        # General
         "theme.toggle": "Toggle dark/light mode",
         "lang.toggle": "العربية",
+
+        # Admin
         "admin.login_title": "Admin Login",
         "admin.email": "Email",
         "admin.password": "Password",
