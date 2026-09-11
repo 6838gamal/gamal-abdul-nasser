@@ -168,7 +168,7 @@ async def case_study_detail(slug: str, request: Request, db: AsyncSession = Depe
         )
     ]
 
-    return templates.TemplateResponse("public/case_study_detail.html", {
+    return templates.TemplateResponse("public/case_studies.html", {
         "request": request,
         "meta": meta,
         "p": p,
