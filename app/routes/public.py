@@ -15,6 +15,9 @@ from app.core.config import settings
 router = APIRouter()
 
 
+# ============================================================
+# الرئيسية
+# ============================================================
 @router.get("/")
 async def home(request: Request, db: AsyncSession = Depends(get_db)):
     featured_projects = (await db.execute(
@@ -39,6 +42,9 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
     })
 
 
+# ============================================================
+# من أنا
+# ============================================================
 @router.get("/about")
 async def about(request: Request):
     meta = base_meta("من أنا — " + settings.SITE_AUTHOR,
@@ -47,7 +53,9 @@ async def about(request: Request):
                                                              "jsonld": [organization_jsonld()]})
 
 
-# ---------- AI Agent Development ----------
+# ============================================================
+# خدمات الذكاء الاصطناعي
+# ============================================================
 @router.get("/ai-agent-development")
 async def ai_agent_development(request: Request, db: AsyncSession = Depends(get_db)):
     items = (await db.execute(
@@ -60,7 +68,6 @@ async def ai_agent_development(request: Request, db: AsyncSession = Depends(get_
     })
 
 
-# ---------- AI Automation ----------
 @router.get("/ai-automation")
 async def ai_automation(request: Request, db: AsyncSession = Depends(get_db)):
     items = (await db.execute(
@@ -73,7 +80,6 @@ async def ai_automation(request: Request, db: AsyncSession = Depends(get_db)):
     })
 
 
-# ---------- Workflow Automation ----------
 @router.get("/workflow-automation")
 async def workflow_automation(request: Request, db: AsyncSession = Depends(get_db)):
     items = (await db.execute(
@@ -86,7 +92,6 @@ async def workflow_automation(request: Request, db: AsyncSession = Depends(get_d
     })
 
 
-# ---------- WhatsApp AI Agent ----------
 @router.get("/whatsapp-ai-agent")
 async def whatsapp_ai_agent(request: Request):
     meta = base_meta("وكيل واتساب الذكي",
@@ -96,7 +101,6 @@ async def whatsapp_ai_agent(request: Request):
     })
 
 
-# ---------- AI Assistant ----------
 @router.get("/ai-assistant")
 async def ai_assistant(request: Request):
     meta = base_meta("المساعد الذكي",
@@ -106,7 +110,6 @@ async def ai_assistant(request: Request):
     })
 
 
-# ---------- Document Intelligence ----------
 @router.get("/document-intelligence")
 async def document_intelligence(request: Request):
     meta = base_meta("ذكاء المستندات",
@@ -117,7 +120,11 @@ async def document_intelligence(request: Request):
     })
 
 
-# ---------- Case Studies ----------
+# ============================================================
+# دراسات الحالة (Case Studies)
+# ============================================================
+
+# ---------- قائمة دراسات الحالة ----------
 @router.get("/case-studies")
 async def case_studies(request: Request, db: AsyncSession = Depends(get_db)):
     items = (await db.execute(
@@ -131,7 +138,47 @@ async def case_studies(request: Request, db: AsyncSession = Depends(get_db)):
     })
 
 
-# ---------- المدونة ----------
+# ---------- تفاصيل دراسة حالة واحدة ----------
+@router.get("/case-studies/{slug}")
+async def case_study_detail(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
+    p = (await db.execute(
+        select(Project).where(
+            Project.slug == slug,
+            Project.is_published == True
+        )
+    )).scalar_one_or_none()
+
+    if not p:
+        raise HTTPException(status_code=404, detail="Case study not found")
+
+    meta = base_meta(
+        p.title,
+        p.short_description or p.title,
+        f"/case-studies/{p.slug}",
+        p.cover_image,
+        og_type="article"
+    )
+
+    jsonld = [
+        breadcrumbs_jsonld(
+            [("الرئيسية", "/"),
+             ("دراسات الحالة", "/case-studies"),
+             (p.title, f"/case-studies/{p.slug}")],
+            settings.APP_URL
+        )
+    ]
+
+    return templates.TemplateResponse("public/case_study_detail.html", {
+        "request": request,
+        "meta": meta,
+        "p": p,
+        "jsonld": jsonld,
+    })
+
+
+# ============================================================
+# المدونة (Blog)
+# ============================================================
 @router.get("/blog")
 async def blog(request: Request, q: str | None = None, cat: str | None = None,
                tag: str | None = None, db: AsyncSession = Depends(get_db)):
@@ -179,7 +226,9 @@ async def article_detail(slug: str, request: Request, db: AsyncSession = Depends
     })
 
 
-# ---------- التواصل ----------
+# ============================================================
+# التواصل (Contact)
+# ============================================================
 @router.get("/contact")
 async def contact(request: Request):
     meta = base_meta("تواصل معي", "أرسل رسالتك مباشرة.", "/contact")
