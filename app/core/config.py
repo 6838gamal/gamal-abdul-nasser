@@ -10,6 +10,7 @@
 - فشل سريع (fail-fast) عند نقص متغيرات حرجة في الإنتاج.
 """
 
+import logging
 import os
 from functools import lru_cache
 from typing import Optional
@@ -19,24 +20,30 @@ from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+log = logging.getLogger("app.config")
+
+
 # ══════════════════════════════════════════════════════════════════════
 # URL helpers
 # ══════════════════════════════════════════════════════════════════════
 
 
-def _is_local_host(host: str) -> bool:
-    """هل المضيف محلي (لا يحتاج SSL)؟"""
-    return (host or "").lower() in (
-        "localhost",
-        "127.0.0.1",
-        "0.0.0.0",
-        "::1",
-        "db",
-        "postgres",
-    )
+def _is_local_host(host: str, environment: str = "development") -> bool:
+    """
+    هل المضيف محلي (لا يحتاج SSL)؟
+
+    ملاحظة: أسماء مثل 'db' و 'postgres' تُعتبر محلية فقط في
+    بيئة التطوير. في الإنتاج، قد تكون أسماء خدمات حقيقية تحتاج SSL.
+    """
+    h = (host or "").lower()
+    if h in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
+        return True
+    if environment != "production" and h in ("db", "postgres"):
+        return True
+    return False
 
 
-def _needs_ssl(raw_url: str) -> bool:
+def _needs_ssl(raw_url: str, environment: str = "development") -> bool:
     """هل يحتاج الاتصال SSL؟ (نعم لأي خادم خارجي)"""
     if not raw_url:
         return False
@@ -48,10 +55,11 @@ def _needs_ssl(raw_url: str) -> bool:
 
         if sslmode == "disable":
             return False
-        if _is_local_host(host):
+        if _is_local_host(host, environment):
             return False
         return True
-    except Exception:
+    except Exception as exc:
+        log.warning("_needs_ssl: فشل تحليل URL (%s) — سيُعطَّل SSL", exc)
         return False
 
 
@@ -196,21 +204,26 @@ class Settings(BaseSettings):
         - اشتقاق SYNC_DATABASE_URL من DATABASE_URL إن لم يُحدَّد.
         - فشل سريع في الإنتاج عند نقص متغيرات حرجة.
         """
+        # 0. تحقق من ENVIRONMENT
+        env = (self.ENVIRONMENT or "development").lower()
+
         # 1. كشف SSL تلقائياً (إن لم يُضبط صراحة)
         if "DB_USE_SSL" not in os.environ and self.DATABASE_URL:
-            self.DB_USE_SSL = _needs_ssl(self.DATABASE_URL)
-
-        # 2. اشتقاق SYNC_DATABASE_URL
-        if not self.SYNC_DATABASE_URL and self.DATABASE_URL:
-            # نحوّل asyncpg → psycopg2
-            sync = self.DATABASE_URL.replace(
-                "postgresql+asyncpg://",
-                "postgresql://",
+            # نحوّل +asyncpg → postgresql:// لتحليل host
+            plain = self.DATABASE_URL.replace(
+                "postgresql+asyncpg://", "postgresql://"
             )
-            self.SYNC_DATABASE_URL = _to_psycopg2_url(sync)
+            self.DB_USE_SSL = _needs_ssl(plain, env)
+
+        # 2. اشتقاق SYNC_DATABASE_URL إن لم يُحدَّد صراحةً في env
+        if "SYNC_DATABASE_URL" not in os.environ and self.DATABASE_URL:
+            plain = self.DATABASE_URL.replace(
+                "postgresql+asyncpg://", "postgresql://"
+            )
+            self.SYNC_DATABASE_URL = _to_psycopg2_url(plain)
 
         # 3. فشل سريع في الإنتاج
-        if self.ENVIRONMENT == "production":
+        if env == "production":
             required = {
                 "DATABASE_URL": self.DATABASE_URL,
                 "SECRET_KEY": self.SECRET_KEY,
@@ -220,12 +233,18 @@ class Settings(BaseSettings):
             }
             missing = [
                 name for name, value in required.items()
-                if not value or value.startswith("dev-")
+                if not value or str(value).startswith("dev-")
             ]
             if missing:
                 raise RuntimeError(
                     f"متغيرات بيئة مفقودة في production: "
                     f"{', '.join(missing)}"
+                )
+
+            # تحقق إضافي: SECRET_KEY معقول الطول
+            if len(self.SECRET_KEY) < 32:
+                raise RuntimeError(
+                    "SECRET_KEY ضعيف في production (أقل من 32 حرفاً)."
                 )
 
         return self
@@ -239,13 +258,16 @@ class Settings(BaseSettings):
 def _build_settings() -> Settings:
     """
     دعم متغيرات خاصة بمنصات النشر:
-    - Render: RENDER_DATABASE_URL (يُعطى تلقائياً)
-    - Railway: DATABASE_URL
-    - Supabase: DATABASE_URL
+
+    - Render: يوفّر DATABASE_URL (Internal) و DATABASE_EXTERNAL_URL.
+    - Railway: يوفّر DATABASE_URL.
+    - Supabase: يوفّر DATABASE_URL.
+    - Fly.io: يوفّر DATABASE_URL.
     """
     raw_db = (
         os.environ.get("RENDER_DATABASE_URL")
-        or os.environ.get("DATABASE_URL", "")
+        or os.environ.get("DATABASE_URL")
+        or os.environ.get("DATABASE_EXTERNAL_URL", "")
     )
 
     overrides: dict = {}
@@ -253,8 +275,6 @@ def _build_settings() -> Settings:
     if raw_db:
         overrides["DATABASE_URL"] = raw_db
         # SYNC يُشتق تلقائياً في model_validator إن لم يُحدَّد
-        if "SYNC_DATABASE_URL" not in os.environ:
-            overrides["SYNC_DATABASE_URL"] = raw_db
 
     return Settings(**overrides)
 
@@ -265,3 +285,33 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+# ══════════════════════════════════════════════════════════════════════
+# طباعة تشخيصية عند التحميل
+# ══════════════════════════════════════════════════════════════════════
+
+import sys as _sys
+
+
+def _dbg(msg: str) -> None:
+    print(f"[config] {msg}", file=_sys.stderr, flush=True)
+
+
+def _describe_db_url(url: str) -> str:
+    if not url:
+        return "(empty)"
+    try:
+        p = urlparse(url)
+        host = p.hostname or "?"
+        port = p.port or "?"
+        db = (p.path or "/?").lstrip("/") or "?"
+        return f"scheme={p.scheme} host={host}:{port} db={db}"
+    except Exception:
+        return "(unparseable)"
+
+
+_dbg(f"ENVIRONMENT={settings.ENVIRONMENT} DEBUG={settings.DEBUG}")
+_dbg(f"DATABASE_URL: {_describe_db_url(settings.DATABASE_URL)}")
+_dbg(f"SYNC_DATABASE_URL: {_describe_db_url(settings.SYNC_DATABASE_URL)}")
+_dbg(f"DB_USE_SSL={settings.DB_USE_SSL}")
