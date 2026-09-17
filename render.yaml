@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════
-# Render Blueprint — Infrastructure as Code
+# Render Blueprint — Docker + Uvicorn
 # ═══════════════════════════════════════════════════════════════════
 
 services:
@@ -7,19 +7,13 @@ services:
     name: gan-platform
     runtime: docker
     dockerfilePath: ./Dockerfile
-    region: oregon                # عدّلها حسب منطقتك: oregon / frankfurt / singapore / ohio
-    plan: starter                 # أو free
+    region: oregon
+    plan: starter
     branch: main
     autoDeploy: true
 
-    # ─── الترحيل: يعمل مرة واحدة قبل بدء Gunicorn ──────────────
-    # هذا يمنع 4 workers من تشغيل الترحيل بشكل متزامن
-    preDeployCommand: python -m app.cli migrate
-
-    # ─── فحص الصحة ─────────────────────────────────────────────
     healthCheckPath: /healthz
 
-    # ─── متغيرات البيئة ────────────────────────────────────────
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.0"
@@ -45,13 +39,13 @@ services:
         generateValue: true
 
       - key: GEMINI_API_KEY
-        sync: false                # تضعه يدوياً من Dashboard
+        sync: false
 
       - key: ADMIN_EMAIL
-        value: "admin@example.com" # عدّله
+        value: "admin@example.com"
 
       - key: ADMIN_PASSWORD
-        sync: false                # تضعه يدوياً
+        sync: false
 
       - key: SITE_AUTHOR
         value: "جمال المقطري"
@@ -59,21 +53,11 @@ services:
       - key: SITE_DESCRIPTION
         value: "هندسة البرمجيات وحلول الذكاء الاصطناعي والأتمتة"
 
-    # ─── قرص ثابت (اختياري) ────────────────────────────────────
-    # disk:
-    #   name: uploads
-    #   mountPath: /var/uploads
-    #   sizeGB: 1
-
-
-# ═══════════════════════════════════════════════════════════════════
-# قاعدة البيانات
-# ═══════════════════════════════════════════════════════════════════
 
 databases:
   - name: gan-db
     databaseName: gan_platform
     user: gan_user
-    plan: free                    # أو starter
-    region: oregon                # نفس منطقة Web Service
+    plan: free
+    region: oregon
     postgresMajorVersion: "16"
