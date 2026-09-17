@@ -21,20 +21,13 @@ RUN mkdir -p /app/uploads /app/logs
 EXPOSE 8000
 
 # ─────────────────────────────────────────────────────
-# أمر التشغيل:
-#   -k uvicorn.workers.UvicornWorker  → ASGI worker
-#   --lifespan on                      → يفعّل lifespan(app)
-#   --capture-output                   → يلتقط stdout/stderr من الـ workers
-#   --access-logfile -                 → access logs إلى stdout
-#   --error-logfile -                  → error logs إلى stderr
-#   --log-level info                   → مستوى السجلات
-#   -w 4                               → 4 workers
+# ملاحظة: --lifespan ليس وسيطاً لـ Gunicorn.
+# نستخدم app.uvicorn_worker.LifespanUvicornWorker لتفعيله.
 # ─────────────────────────────────────────────────────
 CMD ["gunicorn", "app.main:app", \
-     "-k", "uvicorn.workers.UvicornWorker", \
-     "-w", "4", \
+     "-k", "app.uvicorn_worker.LifespanUvicornWorker", \
+     "-w", "2", \
      "-b", "0.0.0.0:8000", \
-     "--lifespan", "on", \
      "--capture-output", \
      "--access-logfile", "-", \
      "--error-logfile", "-", \
