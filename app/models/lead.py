@@ -87,6 +87,17 @@ class Lead(Base):
     next_action = Column(String(100), nullable=True)
     summary = Column(Text, nullable=True)
 
+    # عدد الرسائل التي تم تلخيصها آخر مرة.
+    # يُستخدم في summarizer.maybe_summarize لتفادي إعادة التلخيص
+    # في كل مرة يصل فيها عدد الرسائل لمضاعف SUMMARY_INTERVAL.
+    last_summarized_count = Column(
+        Integer,
+        default=0,
+        server_default="0",
+        nullable=False,
+        comment="عدد الرسائل عند آخر تلخيص",
+    )
+
     # ─────────────────────────────────────
     # Handoff
     # ─────────────────────────────────────
