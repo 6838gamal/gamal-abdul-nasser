@@ -1,6 +1,7 @@
 """نقطة دخول التطبيق."""
 
 import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -29,11 +30,28 @@ from app.models.user import User
 
 
 # ══════════════════════════════════════════════════════════════════════
+# طباعة فورية على stderr — تظهر في كل بيئات النشر (Render/Docker/…)
+# ══════════════════════════════════════════════════════════════════════
+
+def _boot(msg: str = "") -> None:
+    """طباعة فورية على stderr — لا تتأثر بـ stdout buffering."""
+    print(msg, file=sys.stderr, flush=True)
+
+
+_boot(">>> main.py: module loading ...")
+
+
+# ══════════════════════════════════════════════════════════════════════
 # ⚠️ مهم جداً: استورد كل الموديلات حتى تُسجَّل في Base.metadata
 # بدونه لن يُنشئ create_all جداول visitor/lead/message
 # ══════════════════════════════════════════════════════════════════════
 
 import app.models  # noqa: F401, E402
+
+# موديلات نحتاجها لتوليد DDL تلقائياً
+from app.models.lead import Lead  # noqa: E402
+from app.models.visitor import Visitor  # noqa: E402
+from app.models.message import Message  # noqa: E402
 
 
 setup_logging("INFO" if not settings.DEBUG else "DEBUG")
@@ -41,28 +59,174 @@ log = logging.getLogger("app")
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
+_boot(">>> main.py: imports OK, logger ready")
+
 
 # ══════════════════════════════════════════════════════════════════════
-# إنشاء الجداول الناقصة (آمن — idempotent)
+# أدوات مساعدة للترحيل (idempotent)
+# ══════════════════════════════════════════════════════════════════════
+
+async def _column_exists(conn, table: str, column: str) -> bool:
+    """هل العمود موجود في الجدول؟"""
+    result = await conn.execute(text("""
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = :t AND column_name = :c
+        LIMIT 1
+    """), {"t": table, "c": column})
+    return result.fetchone() is not None
+
+
+async def _ensure_column(
+    conn,
+    table: str,
+    column: str,
+    ddl_type: str,
+    default: str | None = None,
+    not_null: bool = False,
+) -> bool:
+    """
+    يضمن وجود عمود في جدول. إن لم يكن موجوداً، يضيفه عبر ALTER TABLE.
+
+    Returns:
+        True إن أُضيف العمود الآن، False إن كان موجوداً مسبقاً.
+    """
+    if await _column_exists(conn, table, column):
+        return False
+
+    ddl = f'ALTER TABLE {table} ADD COLUMN "{column}" {ddl_type}'
+    if default is not None:
+        ddl += f" DEFAULT {default}"
+    if not_null:
+        ddl += " NOT NULL"
+
+    await conn.execute(text(ddl))
+    _boot(f"        ➕ أُضيف العمود {table}.{column} ({ddl_type})")
+    log.info("أُضيف العمود %s.%s (%s)", table, column, ddl_type)
+    return True
+
+
+def _sqlalchemy_type_to_pg(col) -> str:
+    """
+    تحويل نوع عمود SQLAlchemy إلى نوع PostgreSQL نصي لاستخدامه في ALTER TABLE.
+    يغطي الأنواع الشائعة المستخدمة في الموديلات.
+    """
+    import sqlalchemy as sa
+
+    t = col.type
+
+    # Integer
+    if isinstance(t, sa.Integer):
+        return "INTEGER"
+    if isinstance(t, sa.BigInteger):
+        return "BIGINT"
+    if isinstance(t, sa.SmallInteger):
+        return "SMALLINT"
+
+    # String
+    if isinstance(t, sa.String):
+        length = getattr(t, "length", None)
+        return f"VARCHAR({length})" if length else "VARCHAR(255)"
+
+    # Text
+    if isinstance(t, sa.Text):
+        return "TEXT"
+
+    # Boolean
+    if isinstance(t, sa.Boolean):
+        return "BOOLEAN"
+
+    # DateTime
+    if isinstance(t, sa.DateTime):
+        return "TIMESTAMPTZ" if t.timezone else "TIMESTAMP"
+
+    # Date / Time
+    if isinstance(t, sa.Date):
+        return "DATE"
+    if isinstance(t, sa.Time):
+        return "TIME"
+
+    # Enum
+    if isinstance(t, sa.Enum):
+        return t.name  # اسم الـ enum المُنشأ مسبقاً
+
+    # Float / Numeric
+    if isinstance(t, sa.Float):
+        return "DOUBLE PRECISION"
+    if isinstance(t, sa.Numeric):
+        return f"NUMERIC({t.precision},{t.scale})"
+
+    # JSON
+    if isinstance(t, sa.JSON):
+        return "JSONB"
+
+    # Fallback
+    return "TEXT"
+
+
+async def _ensure_columns_from_model(conn, model) -> list[str]:
+    """
+    يضمن وجود كل أعمدة الموديل في جدول قاعدة البيانات.
+    يتجاهل المفاتيح الأجنبية (تُنشأ مع الجدول) والأعمدة الموجودة مسبقاً.
+
+    Returns:
+        قائمة بأسماء الأعمدة التي أُضيفت الآن.
+    """
+    table = model.__tablename__
+    added: list[str] = []
+
+    for col in model.__table__.columns:
+        name = col.name
+        ddl_type = _sqlalchemy_type_to_pg(col)
+
+        # استخراج DEFAULT من server_default إن وُجد
+        default = None
+        if col.server_default is not None:
+            default = str(col.server_default.arg)
+
+        added_now = await _ensure_column(
+            conn,
+            table,
+            name,
+            ddl_type,
+            default=default,
+            not_null=bool(col.nullable is False and default is not None),
+        )
+        if added_now:
+            added.append(name)
+
+    return added
+
+
+# ══════════════════════════════════════════════════════════════════════
+# إنشاء الجداول الناقصة + ترحيل الأعمدة (آمن — idempotent)
 # ══════════════════════════════════════════════════════════════════════
 
 async def _ensure_chat_tables(conn) -> None:
     """
     تأكد من وجود جداول AI Sales Agent.
 
-    يعمل حتى لو كانت الجداول موجودة جزئياً.
-    يعالج حالة وجود جدول messages قديم ببنية مختلفة.
+    - ينشئ الجداول إن لم تكن موجودة.
+    - يضيف الأعمدة الناقصة إن كان الجدول موجوداً ببنية أقدم.
+    - يعالج حالة وجود جدول messages قديم ببنية مختلفة.
     """
 
-    print("\n" + "═" * 60, flush=True)
-    print("🔄 [MIGRATION] بدء التأكد من جداول AI Sales Agent...", flush=True)
-    print("═" * 60, flush=True)
+    _boot("")
+    _boot("═" * 60)
+    _boot("🔄 [MIGRATION] بدء التأكد من جداول AI Sales Agent...")
+    _boot("═" * 60)
 
     # ─────────────────────────────────────────────────────────────
     # 1) enum lead_stage
     # ─────────────────────────────────────────────────────────────
+    #
+    # ⚠️ ملاحظة حاسمة:
+    # الموديل LeadStage يحوي أعضاء مثل NEW بقيمة "new".
+    # SQLAlchemy Enum(LeadStage) يخزّن *أسماء* الأعضاء ('NEW') في PG
+    # افتراضياً، لذا يجب أن تكون قيم الـ enum في PG بأحرف كبيرة
+    # لتطابق ما يتوقعه SQLAlchemy.
+    # ─────────────────────────────────────────────────────────────
 
-    print("  [1/4] التحقق من enum lead_stage...", flush=True)
+    _boot("  [1/5] التحقق من enum lead_stage...")
     await conn.execute(text("""
         DO $$
         BEGIN
@@ -74,13 +238,13 @@ async def _ensure_chat_tables(conn) -> None:
             END IF;
         END $$;
     """))
-    print("        ✓ enum lead_stage جاهز", flush=True)
+    _boot("        ✓ enum lead_stage جاهز")
 
     # ─────────────────────────────────────────────────────────────
     # 2) visitors
     # ─────────────────────────────────────────────────────────────
 
-    print("  [2/4] إنشاء/التحقق من جدول visitors...", flush=True)
+    _boot("  [2/5] إنشاء/التحقق من جدول visitors...")
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS visitors (
             id SERIAL PRIMARY KEY,
@@ -94,17 +258,21 @@ async def _ensure_chat_tables(conn) -> None:
         );
     """))
 
+    added = await _ensure_columns_from_model(conn, Visitor)
+    if added:
+        _boot(f"        ➕ أعمدة visitors المضافة: {', '.join(added)}")
+
     await conn.execute(text("""
         CREATE UNIQUE INDEX IF NOT EXISTS ix_visitors_visitor_uid
             ON visitors (visitor_uid);
     """))
-    print("        ✓ جدول visitors جاهز", flush=True)
+    _boot("        ✓ جدول visitors جاهز")
 
     # ─────────────────────────────────────────────────────────────
     # 3) leads
     # ─────────────────────────────────────────────────────────────
 
-    print("  [3/4] إنشاء/التحقق من جدول leads...", flush=True)
+    _boot("  [3/5] إنشاء/التحقق من جدول leads...")
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS leads (
             id SERIAL PRIMARY KEY,
@@ -122,6 +290,7 @@ async def _ensure_chat_tables(conn) -> None:
             intent VARCHAR(100),
             next_action VARCHAR(100),
             summary TEXT,
+            last_summarized_count INTEGER NOT NULL DEFAULT 0,
             handoff_reason TEXT,
             handoff_at TIMESTAMPTZ,
             notified_owner INTEGER NOT NULL DEFAULT 0,
@@ -129,6 +298,13 @@ async def _ensure_chat_tables(conn) -> None:
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
     """))
+
+    # ─── ترحيل تلقائي لكل أعمدة الموديل ──────────────────────
+    # هذا يضمن أن leads.last_summarized_count وأي عمود آخر
+    # يعرّفه الموديل سيُضاف تلقائياً إن كان ناقصاً.
+    added = await _ensure_columns_from_model(conn, Lead)
+    if added:
+        _boot(f"        ➕ أعمدة leads المضافة: {', '.join(added)}")
 
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_leads_visitor_id ON leads (visitor_id);"
@@ -139,17 +315,13 @@ async def _ensure_chat_tables(conn) -> None:
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_leads_score ON leads (score);"
     ))
-    print("        ✓ جدول leads جاهز", flush=True)
+    _boot("        ✓ جدول leads جاهز")
 
     # ─────────────────────────────────────────────────────────────
     # 4) messages — مع معالجة البنية القديمة
     # ─────────────────────────────────────────────────────────────
-    #
-    # قد يكون هناك جدول messages قديم بدون عمود lead_id.
-    # نكتشف ذلك ونعيد إنشاء الجدول إن لزم.
-    # ─────────────────────────────────────────────────────────────
 
-    print("  [4/4] إنشاء/التحقق من جدول messages...", flush=True)
+    _boot("  [4/5] إنشاء/التحقق من جدول messages...")
     result = await conn.execute(text("""
         SELECT column_name FROM information_schema.columns
         WHERE table_name = 'messages'
@@ -159,7 +331,7 @@ async def _ensure_chat_tables(conn) -> None:
     needs_recreate = bool(existing_cols) and ("lead_id" not in existing_cols)
 
     if needs_recreate:
-        print("        ⚠️  جدول messages ببنية قديمة — سيُحذف ويُعاد إنشاؤه", flush=True)
+        _boot("        ⚠️  جدول messages ببنية قديمة — سيُحذف ويُعاد إنشاؤه")
         log.warning(
             "⚠️  جدول messages موجود ببنية قديمة (بدون lead_id). "
             "سيُحذف ويُعاد إنشاؤه."
@@ -179,17 +351,49 @@ async def _ensure_chat_tables(conn) -> None:
         );
     """))
 
+    added = await _ensure_columns_from_model(conn, Message)
+    if added:
+        _boot(f"        ➕ أعمدة messages المضافة: {', '.join(added)}")
+
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_messages_lead_id ON messages (lead_id);"
     ))
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_messages_created_at ON messages (created_at);"
     ))
-    print("        ✓ جدول messages جاهز", flush=True)
+    _boot("        ✓ جدول messages جاهز")
 
-    print("═" * 60, flush=True)
-    print("✅ [MIGRATION] اكتملت جميع جداول AI Sales Agent بنجاح", flush=True)
-    print("═" * 60 + "\n", flush=True)
+    # ─────────────────────────────────────────────────────────────
+    # 5) فحص نهائي: التأكد من الأعمدة الحرجة
+    # ─────────────────────────────────────────────────────────────
+
+    _boot("  [5/5] فحص نهائي للأعمدة الحرجة...")
+    critical = [
+        ("leads", "last_summarized_count"),
+        ("leads", "visitor_id"),
+        ("leads", "stage"),
+        ("leads", "score"),
+        ("messages", "lead_id"),
+        ("messages", "role"),
+        ("visitors", "visitor_uid"),
+    ]
+    missing = []
+    for tbl, col in critical:
+        if not await _column_exists(conn, tbl, col):
+            missing.append(f"{tbl}.{col}")
+
+    if missing:
+        msg = "❌ أعمدة حرجة مفقودة بعد الترحيل: " + ", ".join(missing)
+        _boot("        " + msg)
+        log.error(msg)
+        raise RuntimeError(msg)
+
+    _boot("        ✓ جميع الأعمدة الحرجة موجودة")
+
+    _boot("═" * 60)
+    _boot("✅ [MIGRATION] اكتملت جميع جداول AI Sales Agent بنجاح")
+    _boot("═" * 60)
+    _boot("")
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -199,20 +403,20 @@ async def _ensure_chat_tables(conn) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    print("\n" + "█" * 60, flush=True)
-    print("🚀 [STARTUP] بدء تشغيل التطبيق...", flush=True)
-    print("█" * 60, flush=True)
+    _boot("")
+    _boot("█" * 60)
+    _boot("🚀 [STARTUP] بدء تشغيل التطبيق...")
+    _boot("█" * 60)
 
     # ── التحقق من DATABASE_URL ────────────────────────────────────
     db_url = settings.DATABASE_URL
     safe_url = db_url.split("@")[-1] if "@" in db_url else db_url
-    print(f"📦 [STARTUP] DATABASE_URL host: ...@{safe_url}", flush=True)
+    _boot(f"📦 [STARTUP] DATABASE_URL host: ...@{safe_url}")
 
     if "localhost" in db_url or "127.0.0.1" in db_url:
-        print(
+        _boot(
             "⚠️  [STARTUP] DATABASE_URL تشير إلى localhost — "
-            "تأكد من ضبط متغير البيئة DATABASE_URL على خادم الإنتاج.",
-            flush=True,
+            "تأكد من ضبط متغير البيئة DATABASE_URL على خادم الإنتاج."
         )
         log.warning(
             "⚠️  DATABASE_URL تشير إلى localhost — "
@@ -220,14 +424,15 @@ async def lifespan(app: FastAPI):
         )
 
     # ── 1) إنشاء الجداول الأساسية عبر metadata ────────────────────
-    print("\n🔄 [STARTUP] (1/4) إنشاء الجداول الأساسية عبر metadata...", flush=True)
+    _boot("")
+    _boot("🔄 [STARTUP] (1/4) إنشاء الجداول الأساسية عبر metadata...")
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        print("✅ [STARTUP] (1/4) تم إنشاء/التحقق من جداول metadata", flush=True)
+        _boot("✅ [STARTUP] (1/4) تم إنشاء/التحقق من جداول metadata")
         log.info("✓ تم إنشاء/التحقق من جداول metadata")
     except Exception as exc:
-        print(f"❌ [STARTUP] (1/4) فشل الاتصال بقاعدة البيانات: {exc}", flush=True)
+        _boot(f"❌ [STARTUP] (1/4) فشل الاتصال بقاعدة البيانات: {exc}")
         log.critical(
             "❌ فشل الاتصال بقاعدة البيانات عند الإقلاع: %s\n"
             "   تأكد من ضبط DATABASE_URL بشكل صحيح في متغيرات البيئة.",
@@ -235,20 +440,22 @@ async def lifespan(app: FastAPI):
         )
         raise SystemExit(1) from exc
 
-    # ── 2) ضمان جداول AI Sales Agent (idempotent) ─────────────────
-    print("\n🔄 [STARTUP] (2/4) ضمان جداول AI Sales Agent...", flush=True)
+    # ── 2) ضمان جداول AI Sales Agent (idempotent + migrations) ────
+    _boot("")
+    _boot("🔄 [STARTUP] (2/4) ضمان جداول AI Sales Agent...")
     try:
         async with engine.begin() as conn:
             await _ensure_chat_tables(conn)
-        print("✅ [STARTUP] (2/4) تم التأكد من جداول visitors/leads/messages", flush=True)
+        _boot("✅ [STARTUP] (2/4) تم التأكد من جداول visitors/leads/messages")
         log.info("✓ تم التأكد من جداول visitors/leads/messages")
     except Exception as exc:
-        print(f"❌ [STARTUP] (2/4) فشل إنشاء جداول chat: {exc}", flush=True)
-        log.error("⚠️  فشل إنشاء جداول chat: %s", exc)
+        _boot(f"❌ [STARTUP] (2/4) فشل إنشاء/ترحيل جداول chat: {exc}")
+        log.error("⚠️  فشل إنشاء/ترحيل جداول chat: %s", exc)
         # لا نوقف التطبيق — قد تكون المشكلة مؤقتة
 
     # ── 3) إنشاء/تحديث حساب المدير ────────────────────────────────
-    print("\n🔄 [STARTUP] (3/4) إنشاء/تحديث حساب المدير...", flush=True)
+    _boot("")
+    _boot("🔄 [STARTUP] (3/4) إنشاء/تحديث حساب المدير...")
     async with AsyncSessionLocal() as db:
 
         existing = (
@@ -267,25 +474,19 @@ async def lifespan(app: FastAPI):
                 bio="مؤسس المنصة",
             ))
             await db.commit()
-            print(
-                f"✅ [STARTUP] تم إنشاء حساب المدير: {settings.ADMIN_EMAIL}",
-                flush=True,
-            )
+            _boot(f"✅ [STARTUP] تم إنشاء حساب المدير: {settings.ADMIN_EMAIL}")
             log.info("✓ تم إنشاء حساب المدير الافتراضي: %s", settings.ADMIN_EMAIL)
 
         elif existing.full_name != settings.SITE_AUTHOR:
             existing.full_name = settings.SITE_AUTHOR
             await db.commit()
-            print(
-                f"✅ [STARTUP] تم تحديث اسم المدير إلى: {settings.SITE_AUTHOR}",
-                flush=True,
-            )
+            _boot(f"✅ [STARTUP] تم تحديث اسم المدير إلى: {settings.SITE_AUTHOR}")
             log.info("✓ تم تحديث اسم المدير إلى: %s", settings.SITE_AUTHOR)
         else:
-            print("ℹ️  [STARTUP] حساب المدير موجود مسبقاً — لا تغيير", flush=True)
+            _boot("ℹ️  [STARTUP] حساب المدير موجود مسبقاً — لا تغيير")
 
         # ── مزامنة seo_settings ───────────────────────────────────
-        print("🔄 [STARTUP] مزامنة seo_settings...", flush=True)
+        _boot("🔄 [STARTUP] مزامنة seo_settings...")
         from app.utils.site_settings import load_site_settings, _apply_to_templates
 
         await db.execute(text("""
@@ -301,27 +502,28 @@ async def lifespan(app: FastAPI):
 
         await load_site_settings(db)
         _apply_to_templates()
-        print(
-            "✅ [STARTUP] تمت مزامنة seo_settings وتطبيقها على القوالب",
-            flush=True,
-        )
+        _boot("✅ [STARTUP] تمت مزامنة seo_settings وتطبيقها على القوالب")
 
     # ── 4) تشغيل heartbeat ────────────────────────────────────────
-    print("\n🔄 [STARTUP] (4/4) تشغيل heartbeat...", flush=True)
+    _boot("")
+    _boot("🔄 [STARTUP] (4/4) تشغيل heartbeat...")
     from app.services import heartbeat
     heartbeat.start()
-    print("✅ [STARTUP] heartbeat يعمل", flush=True)
+    _boot("✅ [STARTUP] heartbeat يعمل")
 
-    print("\n" + "█" * 60, flush=True)
-    print("✅ [STARTUP] التطبيق جاهز لاستقبال الطلبات", flush=True)
-    print("█" * 60 + "\n", flush=True)
+    _boot("")
+    _boot("█" * 60)
+    _boot("✅ [STARTUP] التطبيق جاهز لاستقبال الطلبات")
+    _boot("█" * 60)
+    _boot("")
 
     try:
         yield
     finally:
-        print("\n🛑 [SHUTDOWN] إيقاف heartbeat...", flush=True)
+        _boot("")
+        _boot("🛑 [SHUTDOWN] إيقاف heartbeat...")
         await heartbeat.stop()
-        print("🛑 [SHUTDOWN] تم الإيقاف بنجاح", flush=True)
+        _boot("🛑 [SHUTDOWN] تم الإيقاف بنجاح")
 
 
 # ══════════════════════════════════════════════════════════════════════
