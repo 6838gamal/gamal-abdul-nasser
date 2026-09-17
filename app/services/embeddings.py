@@ -7,41 +7,37 @@ Embeddings Service — Google Gemini Embedding API.
 - embed_text: نص واحد
 - embed_batch: عدة نصوص
 - embed_knowledge_entry: إدخال معرفة
-- embed_message: رسالة
 - embed_all_knowledge: كل الإدخالات الناقصة
+- embed_message: رسالة
+
+يعتمد على llm_client.GeminiClient لتفادي التكرار،
+ويستخدم task_type المناسب لتحسين دقة البحث.
 """
 
 import logging
 from typing import List, Optional
 
-import httpx
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.models.knowledge import KnowledgeEntry
 from app.models.message import Message
+from app.services.llm_client import (
+    EMBEDDING_DIM,
+    get_client,
+)
 
 log = logging.getLogger("app")
 
-EMBEDDING_MODEL = "text-embedding-004"
-EMBEDDING_DIM = 768
-MAX_TEXT_LENGTH = 2048
 BATCH_SIZE = 20
 
-EMBEDDING_URL = (
-    f"https://generativelanguage.googleapis.com/"
-    f"v1beta/models/{EMBEDDING_MODEL}:embedContent"
-)
-
-BATCH_URL = (
-    f"https://generativelanguage.googleapis.com/"
-    f"v1beta/models/{EMBEDDING_MODEL}:batchEmbedContents"
-)
+# أنواع المهام حسب Gemini API
+TASK_DOCUMENT = "RETRIEVAL_DOCUMENT"
+TASK_QUERY = "RETRIEVAL_QUERY"
 
 
 # ══════════════════════════════════════════════════════════════════════
-# Core
+# Helpers
 # ══════════════════════════════════════════════════════════════════════
 
 
@@ -50,123 +46,56 @@ def _vector_to_pg(vector: List[float]) -> str:
     return "[" + ",".join(str(float(v)) for v in vector) + "]"
 
 
-async def embed_text(text_input: str) -> Optional[List[float]]:
+def _is_valid_vector(vec: Optional[List[float]]) -> bool:
+    """التحقق من صحة الـ vector وأبعاده."""
+    return bool(vec) and len(vec) == EMBEDDING_DIM
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Core
+# ══════════════════════════════════════════════════════════════════════
+
+
+async def embed_text(
+    text_input: str,
+    *,
+    task_type: str = TASK_DOCUMENT,
+) -> Optional[List[float]]:
     """
     تحويل نص إلى embedding vector (768-dim).
+
+    Args:
+        text_input: النص المراد تحويله.
+        task_type: نوع المهمة (RETRIEVAL_DOCUMENT أو RETRIEVAL_QUERY).
+
+    Returns:
+        list[float] بطول 768، أو None عند الفشل.
     """
 
     if not text_input or not text_input.strip():
         return None
 
-    if not settings.GEMINI_API_KEY:
-        log.warning("GEMINI_API_KEY not set")
-        return None
-
-    clean = text_input.strip()[:MAX_TEXT_LENGTH]
-
-    payload = {
-        "model": f"models/{EMBEDDING_MODEL}",
-        "content": {"parts": [{"text": clean}]},
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.post(
-                EMBEDDING_URL,
-                params={"key": settings.GEMINI_API_KEY},
-                json=payload,
-                headers={"Content-Type": "application/json"},
-            )
-
-            if response.status_code != 200:
-                log.error(
-                    "Embedding API error %s: %s",
-                    response.status_code,
-                    response.text[:200],
-                )
-                return None
-
-            data = response.json()
-            values = data.get("embedding", {}).get("values")
-
-            if not values or len(values) != EMBEDDING_DIM:
-                log.warning(
-                    "Unexpected embedding dim: %s",
-                    len(values) if values else 0,
-                )
-                return None
-
-            return values
-
-    except Exception as e:
-        log.exception("embed_text failed: %s", e)
-        return None
+    client = get_client()
+    return await client.embed(text_input, task_type=task_type)
 
 
 async def embed_batch(
     texts: List[str],
+    *,
+    task_type: str = TASK_DOCUMENT,
 ) -> List[Optional[List[float]]]:
     """
     تحويل عدة نصوص في طلب واحد.
+
+    Returns:
+        list بنفس الطول، بعض العناصر قد تكون None.
     """
 
     if not texts:
         return []
 
-    if not settings.GEMINI_API_KEY:
-        return [None] * len(texts)
-
-    clean_texts = [
-        (t or "").strip()[:MAX_TEXT_LENGTH] or " "
-        for t in texts
-    ]
-
-    requests_payload = [
-        {
-            "model": f"models/{EMBEDDING_MODEL}",
-            "content": {"parts": [{"text": t}]},
-        }
-        for t in clean_texts
-    ]
-
-    payload = {"requests": requests_payload}
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                BATCH_URL,
-                params={"key": settings.GEMINI_API_KEY},
-                json=payload,
-                headers={"Content-Type": "application/json"},
-            )
-
-            if response.status_code != 200:
-                log.error(
-                    "Batch embedding error %s: %s",
-                    response.status_code,
-                    response.text[:200],
-                )
-                return [None] * len(texts)
-
-            data = response.json()
-            embeddings = data.get("embeddings", [])
-
-            if len(embeddings) != len(texts):
-                log.warning(
-                    "Batch size mismatch: got %d, expected %d",
-                    len(embeddings),
-                    len(texts),
-                )
-                return [None] * len(texts)
-
-            return [
-                e.get("values") if e else None
-                for e in embeddings
-            ]
-
-    except Exception as e:
-        log.exception("embed_batch failed: %s", e)
-        return [None] * len(texts)
+    client = get_client()
+    return await client.embed_batch(texts, task_type=task_type)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -180,6 +109,9 @@ async def embed_knowledge_entry(
 ) -> bool:
     """
     حساب embedding لإدخال معرفة وحفظه في DB.
+
+    Returns:
+        True عند النجاح، False عند الفشل.
     """
 
     blob = f"{entry.title or ''}\n{entry.content or ''}".strip()
@@ -187,9 +119,9 @@ async def embed_knowledge_entry(
     if not blob:
         return False
 
-    vector = await embed_text(blob)
+    vector = await embed_text(blob, task_type=TASK_DOCUMENT)
 
-    if not vector:
+    if not _is_valid_vector(vector):
         return False
 
     vector_str = _vector_to_pg(vector)
@@ -207,7 +139,11 @@ async def embed_knowledge_entry(
         return True
 
     except Exception as e:
-        log.error("Failed to save embedding for entry %s: %s", entry.id, e)
+        log.error(
+            "Failed to save embedding for entry %s: %s",
+            entry.id,
+            e,
+        )
         await db.rollback()
         return False
 
@@ -218,7 +154,8 @@ async def embed_all_knowledge(
     """
     حساب embeddings لكل الإدخالات التي ليس لها embedding.
 
-    يُرجع dict: {total, embedded, failed}
+    Returns:
+        dict: {total, embedded, failed}
     """
 
     result = await db.execute(
@@ -236,7 +173,11 @@ async def embed_all_knowledge(
     if not rows:
         return {"total": 0, "embedded": 0, "failed": 0}
 
-    log.info("Embedding %d entries in batches of %d", len(rows), BATCH_SIZE)
+    log.info(
+        "Embedding %d entries in batches of %d",
+        len(rows),
+        BATCH_SIZE,
+    )
 
     embedded = 0
     failed = 0
@@ -249,10 +190,10 @@ async def embed_all_knowledge(
             for r in batch
         ]
 
-        vectors = await embed_batch(texts)
+        vectors = await embed_batch(texts, task_type=TASK_DOCUMENT)
 
         for row, vec in zip(batch, vectors):
-            if not vec:
+            if not _is_valid_vector(vec):
                 failed += 1
                 continue
 
@@ -268,12 +209,21 @@ async def embed_all_knowledge(
                 embedded += 1
 
             except Exception as e:
-                log.error("Failed to save embedding for %s: %s", row[0], e)
+                log.error(
+                    "Failed to save embedding for %s: %s",
+                    row[0],
+                    e,
+                )
                 failed += 1
 
         await db.commit()
 
-    log.info("Embedded %d/%d (%d failed)", embedded, len(rows), failed)
+    log.info(
+        "Embedded %d/%d (%d failed)",
+        embedded,
+        len(rows),
+        failed,
+    )
 
     return {
         "total": len(rows),
@@ -293,9 +243,12 @@ async def embed_message(
 ) -> bool:
     """
     حساب embedding لرسالة (إن لم يكن موجوداً).
+
+    Returns:
+        True إذا كان موجوداً أو تم حفظه، False عند الفشل.
     """
 
-    if not message.content:
+    if not message.content or not message.content.strip():
         return False
 
     # تحقق إذا كان موجوداً
@@ -307,9 +260,9 @@ async def embed_message(
     if existing.scalar():
         return True
 
-    vector = await embed_text(message.content)
+    vector = await embed_text(message.content, task_type=TASK_DOCUMENT)
 
-    if not vector:
+    if not _is_valid_vector(vector):
         return False
 
     try:
@@ -317,6 +270,7 @@ async def embed_message(
             text("""
                 INSERT INTO message_embeddings (message_id, embedding)
                 VALUES (:mid, CAST(:vec AS vector))
+                ON CONFLICT (message_id) DO NOTHING
             """),
             {"mid": message.id, "vec": _vector_to_pg(vector)},
         )
@@ -324,6 +278,10 @@ async def embed_message(
         return True
 
     except Exception as e:
-        log.error("Failed to save message embedding %s: %s", message.id, e)
+        log.error(
+            "Failed to save message embedding %s: %s",
+            message.id,
+            e,
+        )
         await db.rollback()
         return False
