@@ -54,10 +54,15 @@ async def _ensure_chat_tables(conn) -> None:
     يعالج حالة وجود جدول messages قديم ببنية مختلفة.
     """
 
+    print("\n" + "═" * 60, flush=True)
+    print("🔄 [MIGRATION] بدء التأكد من جداول AI Sales Agent...", flush=True)
+    print("═" * 60, flush=True)
+
     # ─────────────────────────────────────────────────────────────
     # 1) enum lead_stage
     # ─────────────────────────────────────────────────────────────
 
+    print("  [1/4] التحقق من enum lead_stage...", flush=True)
     await conn.execute(text("""
         DO $$
         BEGIN
@@ -69,11 +74,13 @@ async def _ensure_chat_tables(conn) -> None:
             END IF;
         END $$;
     """))
+    print("        ✓ enum lead_stage جاهز", flush=True)
 
     # ─────────────────────────────────────────────────────────────
     # 2) visitors
     # ─────────────────────────────────────────────────────────────
 
+    print("  [2/4] إنشاء/التحقق من جدول visitors...", flush=True)
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS visitors (
             id SERIAL PRIMARY KEY,
@@ -91,11 +98,13 @@ async def _ensure_chat_tables(conn) -> None:
         CREATE UNIQUE INDEX IF NOT EXISTS ix_visitors_visitor_uid
             ON visitors (visitor_uid);
     """))
+    print("        ✓ جدول visitors جاهز", flush=True)
 
     # ─────────────────────────────────────────────────────────────
     # 3) leads
     # ─────────────────────────────────────────────────────────────
 
+    print("  [3/4] إنشاء/التحقق من جدول leads...", flush=True)
     await conn.execute(text("""
         CREATE TABLE IF NOT EXISTS leads (
             id SERIAL PRIMARY KEY,
@@ -130,6 +139,7 @@ async def _ensure_chat_tables(conn) -> None:
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_leads_score ON leads (score);"
     ))
+    print("        ✓ جدول leads جاهز", flush=True)
 
     # ─────────────────────────────────────────────────────────────
     # 4) messages — مع معالجة البنية القديمة
@@ -139,6 +149,7 @@ async def _ensure_chat_tables(conn) -> None:
     # نكتشف ذلك ونعيد إنشاء الجدول إن لزم.
     # ─────────────────────────────────────────────────────────────
 
+    print("  [4/4] إنشاء/التحقق من جدول messages...", flush=True)
     result = await conn.execute(text("""
         SELECT column_name FROM information_schema.columns
         WHERE table_name = 'messages'
@@ -148,6 +159,7 @@ async def _ensure_chat_tables(conn) -> None:
     needs_recreate = bool(existing_cols) and ("lead_id" not in existing_cols)
 
     if needs_recreate:
+        print("        ⚠️  جدول messages ببنية قديمة — سيُحذف ويُعاد إنشاؤه", flush=True)
         log.warning(
             "⚠️  جدول messages موجود ببنية قديمة (بدون lead_id). "
             "سيُحذف ويُعاد إنشاؤه."
@@ -173,6 +185,11 @@ async def _ensure_chat_tables(conn) -> None:
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_messages_created_at ON messages (created_at);"
     ))
+    print("        ✓ جدول messages جاهز", flush=True)
+
+    print("═" * 60, flush=True)
+    print("✅ [MIGRATION] اكتملت جميع جداول AI Sales Agent بنجاح", flush=True)
+    print("═" * 60 + "\n", flush=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -182,21 +199,35 @@ async def _ensure_chat_tables(conn) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
+    print("\n" + "█" * 60, flush=True)
+    print("🚀 [STARTUP] بدء تشغيل التطبيق...", flush=True)
+    print("█" * 60, flush=True)
+
     # ── التحقق من DATABASE_URL ────────────────────────────────────
     db_url = settings.DATABASE_URL
+    safe_url = db_url.split("@")[-1] if "@" in db_url else db_url
+    print(f"📦 [STARTUP] DATABASE_URL host: ...@{safe_url}", flush=True)
 
     if "localhost" in db_url or "127.0.0.1" in db_url:
+        print(
+            "⚠️  [STARTUP] DATABASE_URL تشير إلى localhost — "
+            "تأكد من ضبط متغير البيئة DATABASE_URL على خادم الإنتاج.",
+            flush=True,
+        )
         log.warning(
             "⚠️  DATABASE_URL تشير إلى localhost — "
             "تأكد من ضبط متغير البيئة DATABASE_URL على خادم الإنتاج."
         )
 
     # ── 1) إنشاء الجداول الأساسية عبر metadata ────────────────────
+    print("\n🔄 [STARTUP] (1/4) إنشاء الجداول الأساسية عبر metadata...", flush=True)
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        print("✅ [STARTUP] (1/4) تم إنشاء/التحقق من جداول metadata", flush=True)
         log.info("✓ تم إنشاء/التحقق من جداول metadata")
     except Exception as exc:
+        print(f"❌ [STARTUP] (1/4) فشل الاتصال بقاعدة البيانات: {exc}", flush=True)
         log.critical(
             "❌ فشل الاتصال بقاعدة البيانات عند الإقلاع: %s\n"
             "   تأكد من ضبط DATABASE_URL بشكل صحيح في متغيرات البيئة.",
@@ -205,15 +236,19 @@ async def lifespan(app: FastAPI):
         raise SystemExit(1) from exc
 
     # ── 2) ضمان جداول AI Sales Agent (idempotent) ─────────────────
+    print("\n🔄 [STARTUP] (2/4) ضمان جداول AI Sales Agent...", flush=True)
     try:
         async with engine.begin() as conn:
             await _ensure_chat_tables(conn)
+        print("✅ [STARTUP] (2/4) تم التأكد من جداول visitors/leads/messages", flush=True)
         log.info("✓ تم التأكد من جداول visitors/leads/messages")
     except Exception as exc:
+        print(f"❌ [STARTUP] (2/4) فشل إنشاء جداول chat: {exc}", flush=True)
         log.error("⚠️  فشل إنشاء جداول chat: %s", exc)
         # لا نوقف التطبيق — قد تكون المشكلة مؤقتة
 
     # ── 3) إنشاء/تحديث حساب المدير ────────────────────────────────
+    print("\n🔄 [STARTUP] (3/4) إنشاء/تحديث حساب المدير...", flush=True)
     async with AsyncSessionLocal() as db:
 
         existing = (
@@ -232,14 +267,25 @@ async def lifespan(app: FastAPI):
                 bio="مؤسس المنصة",
             ))
             await db.commit()
+            print(
+                f"✅ [STARTUP] تم إنشاء حساب المدير: {settings.ADMIN_EMAIL}",
+                flush=True,
+            )
             log.info("✓ تم إنشاء حساب المدير الافتراضي: %s", settings.ADMIN_EMAIL)
 
         elif existing.full_name != settings.SITE_AUTHOR:
             existing.full_name = settings.SITE_AUTHOR
             await db.commit()
+            print(
+                f"✅ [STARTUP] تم تحديث اسم المدير إلى: {settings.SITE_AUTHOR}",
+                flush=True,
+            )
             log.info("✓ تم تحديث اسم المدير إلى: %s", settings.SITE_AUTHOR)
+        else:
+            print("ℹ️  [STARTUP] حساب المدير موجود مسبقاً — لا تغيير", flush=True)
 
         # ── مزامنة seo_settings ───────────────────────────────────
+        print("🔄 [STARTUP] مزامنة seo_settings...", flush=True)
         from app.utils.site_settings import load_site_settings, _apply_to_templates
 
         await db.execute(text("""
@@ -255,15 +301,27 @@ async def lifespan(app: FastAPI):
 
         await load_site_settings(db)
         _apply_to_templates()
+        print(
+            "✅ [STARTUP] تمت مزامنة seo_settings وتطبيقها على القوالب",
+            flush=True,
+        )
 
     # ── 4) تشغيل heartbeat ────────────────────────────────────────
+    print("\n🔄 [STARTUP] (4/4) تشغيل heartbeat...", flush=True)
     from app.services import heartbeat
     heartbeat.start()
+    print("✅ [STARTUP] heartbeat يعمل", flush=True)
+
+    print("\n" + "█" * 60, flush=True)
+    print("✅ [STARTUP] التطبيق جاهز لاستقبال الطلبات", flush=True)
+    print("█" * 60 + "\n", flush=True)
 
     try:
         yield
     finally:
+        print("\n🛑 [SHUTDOWN] إيقاف heartbeat...", flush=True)
         await heartbeat.stop()
+        print("🛑 [SHUTDOWN] تم الإيقاف بنجاح", flush=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
