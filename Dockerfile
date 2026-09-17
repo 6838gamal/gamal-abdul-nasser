@@ -21,15 +21,15 @@ RUN mkdir -p /app/uploads /app/logs
 EXPOSE 8000
 
 # ─────────────────────────────────────────────────────
-# ملاحظة: --lifespan ليس وسيطاً لـ Gunicorn.
-# نستخدم app.uvicorn_worker.LifespanUvicornWorker لتفعيله.
+# Uvicorn مباشرة:
+#   - يدعم --lifespan on أصلياً
+#   - lifespan يشغّل _ensure_chat_tables تلقائياً
+#   - --workers 1 كافٍ لـ plan: starter
 # ─────────────────────────────────────────────────────
-CMD ["gunicorn", "app.main:app", \
-     "-k", "app.uvicorn_worker.LifespanUvicornWorker", \
-     "-w", "2", \
-     "-b", "0.0.0.0:8000", \
-     "--capture-output", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--lifespan", "on", \
+     "--workers", "1", \
      "--log-level", "info", \
-     "--timeout", "120"]
+     "--access-log"]
