@@ -27,6 +27,7 @@ from app.routes import public, seo_routes, auth_routes, downloads, chat as chat_
 from app.admin.router import router as admin_router
 from app.utils.templates import templates
 from app.models.user import User
+from app.services.vector_mode import detect_vector_mode
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -650,3 +651,10 @@ async def server_error(request: Request, exc):
         },
         status_code=500,
     )
+
+
+@app.on_event("startup")
+async def startup():
+    async with async_session_maker() as db:
+        mode = await detect_vector_mode(db)
+        logger.info(f"🚀 Knowledge search mode: {mode}")
