@@ -2,32 +2,85 @@
 
 """
 Knowledge Search — Semantic + Keyword Fallback.
+
+- semantic_search: pgvector cosine similarity
+- keyword_search:  fallback عند فشل semantic
+- search_knowledge: الواجهة العامة
+
+التحسينات:
+- تطبيع النص العربي قبل tokenization
+- استخدام RETRIEVAL_QUERY للاستعلامات
+- حد أعلى لعدد الصفوف في keyword_search
 """
 
 import logging
 import re
-from typing import Any, Dict, List
+import unicodedata
+from typing import Any, Dict, List, Set
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.knowledge import KnowledgeEntry
-from app.services.embeddings import embed_text
+from app.services.embeddings import (
+    TASK_QUERY,
+    embed_text,
+)
 
 log = logging.getLogger("app")
 
 MIN_SIMILARITY = 0.5
+KEYWORD_SCAN_LIMIT = 2000
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Text normalization (Arabic-aware)
+# ══════════════════════════════════════════════════════════════════════
+
+_ARABIC_DIACRITICS = re.compile(r"[\u064B-\u0652\u0670\u0640]")
+
+
+def normalize_text(s: str) -> str:
+    """
+    تطبيع النص العربي:
+    - إزالة التشكيل والتطويل
+    - توحيد الهمزات
+    - توحيد ة/ه و ى/ي
+    - lowercase للحروف اللاتينية
+    """
+    if not s:
+        return ""
+
+    # Unicode normalization
+    s = unicodedata.normalize("NFKC", s)
+
+    # lowercase
+    s = s.lower()
+
+    # إزالة التشكيل
+    s = _ARABIC_DIACRITICS.sub("", s)
+
+    # توحيد الهمزات
+    s = s.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+
+    # توحيد التاء المربوطة والألف المقصورة
+    s = s.replace("ة", "ه").replace("ى", "ي")
+
+    return s
+
+
+def _tokenize(text_input: str) -> List[str]:
+    """
+    تقسيم النص إلى tokens بعد التطبيع.
+    """
+    normalized = normalize_text(text_input)
+    tokens = re.findall(r"\w+", normalized, flags=re.UNICODE)
+    return [t for t in tokens if len(t) > 1]
 
 
 # ══════════════════════════════════════════════════════════════════════
 # Keyword Fallback
 # ══════════════════════════════════════════════════════════════════════
-
-
-def _tokenize(text_input: str) -> List[str]:
-    text_input = text_input.lower()
-    tokens = re.findall(r"\w+", text_input, flags=re.UNICODE)
-    return [t for t in tokens if len(t) > 1]
 
 
 async def keyword_search(
@@ -39,14 +92,15 @@ async def keyword_search(
     بحث keyword-based (fallback).
     """
 
-    query_tokens = set(_tokenize(query))
+    query_tokens: Set[str] = set(_tokenize(query))
     if not query_tokens:
         return []
 
+    # حد أعلى لعدد الصفوف المسحوبة (لتفادي استهلاك الذاكرة)
     result = await db.execute(
-        select(KnowledgeEntry).where(
-            KnowledgeEntry.is_active == True  # noqa: E712
-        )
+        select(KnowledgeEntry)
+        .where(KnowledgeEntry.is_active == True)  # noqa: E712
+        .limit(KEYWORD_SCAN_LIMIT)
     )
 
     entries = result.scalars().all()
@@ -56,7 +110,7 @@ async def keyword_search(
         title = str(getattr(entry, "title", "") or "")
         content = str(getattr(entry, "content", "") or "")
 
-        blob = f"{title} {content}".lower()
+        blob = f"{title} {content}"
         blob_tokens = set(_tokenize(blob))
 
         if not blob_tokens:
@@ -66,10 +120,15 @@ async def keyword_search(
         if not overlap:
             continue
 
-        score = len(overlap)
+        # score أساسي
+        score = float(len(overlap))
 
-        title_tokens = set(_tokenize(title.lower()))
-        score += 2 * len(query_tokens & title_tokens)
+        # تعزيز عند التطابق في العنوان
+        title_tokens = set(_tokenize(title))
+        if title_tokens:
+            title_overlap = len(query_tokens & title_tokens)
+            # تطبيع بطول العنوان لتفادي تحيّز العناوين الطويلة
+            score += 2.0 * (title_overlap / max(len(title_tokens), 1))
 
         scored.append((score, entry))
 
@@ -103,7 +162,8 @@ async def semantic_search(
     if not query:
         return []
 
-    vector = await embed_text(query)
+    # نستخدم RETRIEVAL_QUERY لأن هذا استعلام بحث
+    vector = await embed_text(query, task_type=TASK_QUERY)
 
     if not vector:
         log.info("Embedding failed, using keyword fallback")
