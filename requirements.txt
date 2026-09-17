@@ -77,3 +77,9 @@ slowapi==0.1.9
 sqlalchemy==2.0.35
 supabase==2.16.0
 uvicorn[standard]==0.32.0
+
+
+
+#-------
+
+pgvector==0.3.0
