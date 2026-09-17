@@ -5,31 +5,36 @@
 services:
   - type: web
     name: gan-platform
-    runtime: python
-    region: oregon                # ⚠️ عدّلها حسب منطقتك: oregon / frankfurt / singapore / ohio
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon                # عدّلها حسب منطقتك: oregon / frankfurt / singapore / ohio
     plan: starter                 # أو free
-    branch: main                  # فرعك
+    branch: main
     autoDeploy: true
 
-    # ─── البناء ────────────────────────────────────────────────
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements.txt
+    # ─── الترحيل: يعمل مرة واحدة قبل بدء Gunicorn ──────────────
+    # هذا يمنع 4 workers من تشغيل الترحيل بشكل متزامن
+    preDeployCommand: python -m app.cli migrate
 
-    # ─── التشغيل ───────────────────────────────────────────────
-    # ⚠️ هذا هو المهم: نشغّل init_db قبل uvicorn
-    # python scripts/init_db.py && uvicorn ...
-    startCommand: |
-      python scripts/init_db.py &&
-      uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    # ─── فحص الصحة ─────────────────────────────────────────────
+    healthCheckPath: /healthz
 
-    # ─── متغيرات البيئة ─────────────────────────────────────────
+    # ─── متغيرات البيئة ────────────────────────────────────────
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.0"
 
       - key: PYTHONUNBUFFERED
         value: "1"
+
+      - key: PYTHONIOENCODING
+        value: "utf-8"
+
+      - key: ENVIRONMENT
+        value: "production"
+
+      - key: DEBUG
+        value: "false"
 
       - key: DATABASE_URL
         fromDatabase:
@@ -43,7 +48,7 @@ services:
         sync: false                # تضعه يدوياً من Dashboard
 
       - key: ADMIN_EMAIL
-        value: "admin@example.com" # ⚠️ عدّله
+        value: "admin@example.com" # عدّله
 
       - key: ADMIN_PASSWORD
         sync: false                # تضعه يدوياً
@@ -53,12 +58,6 @@ services:
 
       - key: SITE_DESCRIPTION
         value: "هندسة البرمجيات وحلول الذكاء الاصطناعي والأتمتة"
-
-      - key: DEBUG
-        value: "false"
-
-    # ─── Health Check ───────────────────────────────────────────
-    healthCheckPath: /healthz
 
     # ─── قرص ثابت (اختياري) ────────────────────────────────────
     # disk:
@@ -76,5 +75,5 @@ databases:
     databaseName: gan_platform
     user: gan_user
     plan: free                    # أو starter
-    region: oregon                # ⚠️ نفس منطقة Web Service
+    region: oregon                # نفس منطقة Web Service
     postgresMajorVersion: "16"
