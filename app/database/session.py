@@ -16,21 +16,26 @@ def _build_connect_args() -> dict:
     """بناء معاملات الاتصال بما فيها SSL إذا لزم."""
     if not settings.DB_USE_SSL:
         return {}
-    # SSL مع تعطيل التحقق من الشهادة (مناسب لـ Render/Neon/Supabase/Railway)
+    
+    # SSL مع التحقق الكامل (آمن — Supabase/Render/Neon يستخدمون شهادات CA موثوقة)
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    log.info("قاعدة البيانات: تم تفعيل SSL للاتصال الخارجي")
+    
+    # للمطورين: فك التعليق فقط لو واجهت SSLCertVerificationError
+    # (وهو نادر جداً مع المزودين السحابيين)
+    # ctx.check_hostname = False
+    # ctx.verify_mode = ssl.CERT_NONE
+    
+    log.info("قاعدة البيانات: تم تفعيل SSL مع التحقق الكامل")
     return {"ssl": ctx}
 
 
 engine = create_async_engine(
     settings.DATABASE_URL,
     connect_args=_build_connect_args(),
-    pool_pre_ping=True,           # يتحقق من صحة الاتصال قبل الاستخدام
+    pool_pre_ping=True,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_POOL_MAX_OVERFLOW,
-    pool_recycle=settings.DB_POOL_RECYCLE,  # تجديد الاتصالات كل 5 دقائق
+    pool_recycle=settings.DB_POOL_RECYCLE,
     pool_timeout=settings.DB_POOL_TIMEOUT,
     echo=settings.DEBUG,
 )
