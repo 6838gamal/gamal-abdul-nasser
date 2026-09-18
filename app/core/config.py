@@ -52,9 +52,13 @@ def _needs_ssl(raw_url: str, environment: str = "development") -> bool:
         host = (parsed.hostname or "").lower()
         params = parse_qs(parsed.query)
         sslmode = params.get("sslmode", [""])[0].lower()
+        channel_binding = params.get("channel_binding", [""])[0].lower()
 
         if sslmode == "disable":
             return False
+        # channel_binding=require يعني أن SSL مطلوب
+        if channel_binding == "require":
+            return True
         if _is_local_host(host, environment):
             return False
         return True
@@ -63,8 +67,20 @@ def _needs_ssl(raw_url: str, environment: str = "development") -> bool:
         return False
 
 
+# ⚠️ معاملات يجب حذفها من URL قبل تمريره لـ asyncpg
+# asyncpg لا يقبلها في الـ URL، وتمريرها يسبب:
+#   TypeError: connect() got an unexpected keyword argument 'X'
+_ASYNCPG_UNSUPPORTED_PARAMS = (
+    "sslmode",
+    "sslcert",
+    "sslkey",
+    "sslrootcert",
+    "channel_binding",   # ← السبب في خطأ Neon
+)
+
+
 def _to_asyncpg_url(url: str) -> str:
-    """تحويل رابط postgresql:// إلى asyncpg."""
+    """تحويل رابط postgresql:// إلى asyncpg + إزالة المعاملات غير المدعومة."""
     if not url:
         return url
 
@@ -73,7 +89,7 @@ def _to_asyncpg_url(url: str) -> str:
             parsed = urlparse(url)
             params = parse_qs(parsed.query, keep_blank_values=True)
             # asyncpg لا يقبل هذه المعاملات في URL
-            for k in ("sslmode", "sslcert", "sslkey", "sslrootcert"):
+            for k in _ASYNCPG_UNSUPPORTED_PARAMS:
                 params.pop(k, None)
             new_query = urlencode({k: v[0] for k, v in params.items()})
             new_parsed = parsed._replace(
@@ -85,8 +101,17 @@ def _to_asyncpg_url(url: str) -> str:
     return url
 
 
+# ⚠️ معاملات يجب حذفها من URL قبل تمريره لـ psycopg2
+_PSYCOPG2_UNSUPPORTED_PARAMS = (
+    "sslrootcert",
+    "sslcert",
+    "sslkey",
+    "channel_binding",
+)
+
+
 def _to_psycopg2_url(url: str) -> str:
-    """تحويل رابط postgresql:// إلى psycopg2."""
+    """تحويل رابط postgresql:// إلى psycopg2 + إزالة المعاملات غير المدعومة."""
     if not url:
         return url
 
@@ -98,7 +123,7 @@ def _to_psycopg2_url(url: str) -> str:
         if url.startswith(prefix):
             parsed = urlparse(url)
             params = parse_qs(parsed.query, keep_blank_values=True)
-            for k in ("sslrootcert", "sslcert", "sslkey"):
+            for k in _PSYCOPG2_UNSUPPORTED_PARAMS:
                 params.pop(k, None)
             new_query = urlencode({k: v[0] for k, v in params.items()})
             new_parsed = parsed._replace(
@@ -263,6 +288,7 @@ def _build_settings() -> Settings:
     - Railway: يوفّر DATABASE_URL.
     - Supabase: يوفّر DATABASE_URL.
     - Fly.io: يوفّر DATABASE_URL.
+    - Neon: يوفّر DATABASE_URL.
     """
     raw_db = (
         os.environ.get("RENDER_DATABASE_URL")
